@@ -7,9 +7,11 @@ from bson import ObjectId
 
 # Local imports
 from database import seed_database, db
-from models import Company, Customer, LeadStatus, CallLog
+from models import Company, Customer, LeadStatus, CallLog, User
 from vapi import trigger_outbound_call
 from agent import app_graph
+from auth import get_password_hash, verify_password, create_access_token, decode_access_token
+from pydantic import BaseModel
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -150,6 +152,74 @@ async def run_agentic_evaluation(customer_id: str, transcript: str, summary: str
             {"$set": {"status": LeadStatus.NEEDS_REVIEW.value}}
         )
 
+
+# ---------------------------------------------------------------------------
+# Authentication Endpoints
+# ---------------------------------------------------------------------------
+
+class RegisterRequest(BaseModel):
+    full_name: str
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/auth/register")
+async def register(req: RegisterRequest):
+    # Check if user exists
+    existing_user = await db.users.find_one({"email": req.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user_data = {
+        "full_name": req.full_name,
+        "email": req.email,
+        "password_hash": get_password_hash(req.password),
+        "role": "Admin"
+    }
+    result = await db.users.insert_one(user_data)
+    
+    # Generate token
+    access_token = create_access_token(data={"sub": req.email, "id": str(result.inserted_id)})
+    return {"access_token": access_token, "token_type": "bearer", "user": {"full_name": req.full_name, "email": req.email, "role": "Admin"}}
+
+@app.post("/api/auth/login")
+async def login(req: LoginRequest):
+    user = await db.users.find_one({"email": req.email})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    if not verify_password(req.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+    access_token = create_access_token(data={"sub": user["email"], "id": str(user["_id"])})
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": {
+            "id": str(user["_id"]),
+            "full_name": user["full_name"],
+            "email": user["email"],
+            "role": user.get("role", "Admin")
+        }
+    }
+
+from fastapi import Depends
+@app.get("/api/auth/me")
+async def get_me(token_payload: dict = Depends(decode_access_token)):
+    user_id = token_payload.get("id")
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    return {
+        "id": str(user["_id"]),
+        "full_name": user["full_name"],
+        "email": user["email"],
+        "role": user.get("role", "Admin")
+    }
 
 # ---------------------------------------------------------------------------
 # New Endpoints

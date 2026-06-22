@@ -9,3 +9,5 @@ pydantic-settings
 httpx
 python-dotenv
 langchain-groq
+passlib[bcrypt]
+pyjwt

@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import AgentsConfig from './components/AgentsConfig';
 import CallLogs from './components/CallLogs';
-import { LayoutDashboard, Settings, Bell, Search, Mic, User, CreditCard, LogOut, X, ScrollText } from 'lucide-react';
+import AuthForm from './components/AuthForm';
+import { getMe } from './api';
+import { LayoutDashboard, Settings, Bell, Search, Mic, User, CreditCard, LogOut, X, ScrollText, Loader2 } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('campaigns');
@@ -11,6 +13,10 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Auth state
+  const [user, setUser] = useState(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Close dropdowns when clicking outside
   const notifRef = useRef(null);
@@ -29,10 +35,49 @@ function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const userData = await getMe();
+        setUser(userData);
+      } catch (error) {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
+    }
+    setIsAuthLoading(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setIsSearching(true);
     setTimeout(() => setIsSearching(false), 500);
+  };
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff]">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthForm onAuthSuccess={(userData) => setUser(userData)} />;
+  }
+
+  const getInitials = (name) => {
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
 
   const renderContent = () => {
@@ -144,7 +189,6 @@ function App() {
                 className={`relative p-2 rounded-full transition-colors ${showNotifications ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
               </button>
               
               {showNotifications && (
@@ -153,20 +197,8 @@ function App() {
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
-                    <div className="p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer">
-                      <p className="text-sm font-medium text-gray-900">Campaign Finished</p>
-                      <p className="text-xs text-gray-500 mt-1">Dream Homes Realty completed 5 outbound calls.</p>
-                      <p className="text-xs text-blue-500 mt-2">10 mins ago</p>
-                    </div>
-                    <div className="p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer">
-                      <p className="text-sm font-medium text-gray-900">Lead Needs Review</p>
-                      <p className="text-xs text-gray-500 mt-1">Jane Smith had an ambiguous response. AI confidence: 45%</p>
-                      <p className="text-xs text-blue-500 mt-2">1 hour ago</p>
-                    </div>
-                    <div className="p-4 hover:bg-gray-50 cursor-pointer">
-                      <p className="text-sm font-medium text-gray-900">New Lead Qualified</p>
-                      <p className="text-xs text-gray-500 mt-1">Bob Williams was marked as QUALIFIED with 92% confidence.</p>
-                      <p className="text-xs text-blue-500 mt-2">2 hours ago</p>
+                    <div className="p-12 text-center">
+                      <p className="text-sm text-gray-500">No new notifications</p>
                     </div>
                   </div>
                 </div>
@@ -187,25 +219,31 @@ function App() {
                 onClick={() => setShowProfile(!showProfile)}
                 className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-100 to-teal-100 flex items-center justify-center border-2 border-white shadow-sm ml-2 cursor-pointer hover:shadow-md transition-shadow"
               >
-                <span className="text-blue-800 font-semibold text-sm">JS</span>
+                <span className="text-blue-800 font-semibold text-sm">{getInitials(user.full_name)}</span>
               </div>
 
               {showProfile && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
-                  <div className="px-4 py-2 border-b border-gray-100 mb-2">
-                    <p className="text-sm font-semibold text-gray-900">John Smith</p>
-                    <p className="text-xs text-gray-500">Admin</p>
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
+                  <div className="px-4 py-3 border-b border-gray-100 mb-2 bg-gray-50/50">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{user.full_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-md">
+                      {user.role}
+                    </span>
                   </div>
-                  <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
+                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
                     <User className="w-4 h-4" /> My Profile
-                  </a>
-                  <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
+                  </button>
+                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors">
                     <CreditCard className="w-4 h-4" /> Billing
-                  </a>
+                  </button>
                   <div className="border-t border-gray-100 mt-2 pt-2">
-                    <a href="#" className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
                       <LogOut className="w-4 h-4" /> Sign Out
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}

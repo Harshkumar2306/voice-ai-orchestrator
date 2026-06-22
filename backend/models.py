@@ -57,3 +57,14 @@ class CallLog(BaseModel):
     class Config:
         populate_by_name = True
         json_encoders = {ObjectId: str}
+
+class User(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    full_name: str
+    email: str
+    password_hash: str
+    role: str = "Admin"
+    
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}

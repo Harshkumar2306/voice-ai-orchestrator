@@ -9,6 +9,29 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const login = async (email, password) => {
+  const response = await api.post('/auth/login', { email, password });
+  return response.data;
+};
+
+export const register = async (full_name, email, password) => {
+  const response = await api.post('/auth/register', { full_name, email, password });
+  return response.data;
+};
+
+export const getMe = async () => {
+  const response = await api.get('/auth/me');
+  return response.data;
+};
+
 export const getCompanies = async () => {
   const response = await api.get('/companies');
   return response.data;
