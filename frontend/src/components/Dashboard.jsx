@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download } from 'lucide-react';
-import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv } from '../api';
+import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2 } from 'lucide-react';
+import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv, addCustomer } from '../api';
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
@@ -89,6 +89,14 @@ const Dashboard = () => {
   const [isPolling, setIsPolling] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
 
+  // Add Lead Modal State
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
+  const [newLeadName, setNewLeadName] = useState('');
+  const [newLeadPhone, setNewLeadPhone] = useState('');
+  const [newLeadEmail, setNewLeadEmail] = useState('');
+  const [addingLead, setAddingLead] = useState(false);
+  const [addLeadError, setAddLeadError] = useState('');
+
   useEffect(() => {
     fetchCompanies();
   }, []);
@@ -167,6 +175,34 @@ const Dashboard = () => {
       setError('Failed to initiate outbound campaign.');
     } finally {
       setTriggering(false);
+    }
+  };
+
+  const handleAddLead = async (e) => {
+    e.preventDefault();
+    if (!newLeadName || !newLeadPhone) {
+      setAddLeadError('Name and Phone Number are required.');
+      return;
+    }
+    setAddingLead(true);
+    setAddLeadError('');
+    try {
+      await addCustomer({
+        company_id: selectedCompanyId,
+        name: newLeadName,
+        phone_number: newLeadPhone,
+        email: newLeadEmail
+      });
+      setShowAddLeadModal(false);
+      setNewLeadName('');
+      setNewLeadPhone('');
+      setNewLeadEmail('');
+      await fetchCustomers(selectedCompanyId);
+      await fetchAnalytics(selectedCompanyId);
+    } catch (err) {
+      setAddLeadError('Failed to add lead. Please check the details and try again.');
+    } finally {
+      setAddingLead(false);
     }
   };
 
@@ -320,6 +356,18 @@ const Dashboard = () => {
               </div>
 
               <button
+                onClick={() => {
+                  setAddLeadError('');
+                  setShowAddLeadModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-all shadow-sm active:scale-95"
+                title="Add custom lead"
+              >
+                <Plus className="w-4 h-4" />
+                Add Lead
+              </button>
+
+              <button
                 onClick={async () => {
                   try {
                     const blob = await exportLeadsCsv(selectedCompanyId);
@@ -443,6 +491,71 @@ const Dashboard = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Add Lead Modal */}
+      {showAddLeadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setShowAddLeadModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setShowAddLeadModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <XCircle className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Add Custom Lead</h3>
+            <p className="text-sm text-gray-500 mb-6">Add a new customer to test the AI voice agent with your own phone number.</p>
+
+            {addLeadError && (
+              <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" /> {addLeadError}
+              </div>
+            )}
+
+            <form onSubmit={handleAddLead} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <input 
+                  type="text" 
+                  required
+                  value={newLeadName}
+                  onChange={(e) => setNewLeadName(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                  placeholder="e.g. John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input 
+                  type="text" 
+                  required
+                  value={newLeadPhone}
+                  onChange={(e) => setNewLeadPhone(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                  placeholder="e.g. +1234567890"
+                />
+                <p className="text-xs text-gray-400 mt-1">Must include country code (e.g. +91...)</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address (Optional)</label>
+                <input 
+                  type="email" 
+                  value={newLeadEmail}
+                  onChange={(e) => setNewLeadEmail(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+                  placeholder="e.g. john@example.com"
+                />
+              </div>
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={addingLead}
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:active:scale-100"
+                >
+                  {addingLead ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {addingLead ? 'Adding...' : 'Add Lead to Campaign'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

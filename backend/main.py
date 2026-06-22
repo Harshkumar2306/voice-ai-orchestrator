@@ -7,7 +7,7 @@ from bson import ObjectId
 
 # Local imports
 from database import seed_database, db
-from models import Company, Customer, LeadStatus, CallLog, User
+from models import Company, Customer, LeadStatus, CallLog, User, CustomerCreate
 from vapi import trigger_outbound_call
 from agent import app_graph
 from auth import get_password_hash, verify_password, create_access_token, decode_access_token
@@ -67,6 +67,20 @@ async def get_customers(company_id: str):
     for c in customers:
         c["_id"] = str(c["_id"])
     return {"customers": customers}
+
+@app.post("/api/customers")
+async def add_customer(req: CustomerCreate):
+    new_customer = {
+        "company_id": req.company_id,
+        "name": req.name,
+        "email": req.email,
+        "phone_number": req.phone_number,
+        "status": LeadStatus.PENDING.value,
+        "created_at": datetime.utcnow()
+    }
+    result = await db.customers.insert_one(new_customer)
+    new_customer["_id"] = str(result.inserted_id)
+    return new_customer
 
 @app.post("/api/campaign/trigger")
 async def trigger_campaign(payload: dict, background_tasks: BackgroundTasks):

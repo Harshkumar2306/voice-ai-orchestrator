@@ -86,4 +86,9 @@ export const exportLeadsCsv = async (companyId) => {
   return response.data;
 };
 
+export const addCustomer = async (customerData) => {
+  const response = await api.post('/customers', customerData);
+  return response.data;
+};
+
 export default api;

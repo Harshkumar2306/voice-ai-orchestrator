@@ -46,6 +46,12 @@ class Customer(BaseModel):
         populate_by_name = True
         json_encoders = {ObjectId: str}
 
+class CustomerCreate(BaseModel):
+    company_id: str
+    name: str
+    email: Optional[str] = None
+    phone_number: str
+
 class CallLog(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     customer_id: str
