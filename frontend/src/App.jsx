@@ -11,6 +11,8 @@ function App() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showBillingModal, setShowBillingModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   
@@ -340,10 +342,10 @@ function App() {
                       {user.role}
                     </span>
                   </div>
-                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                  <button onClick={() => { setShowProfileModal(true); setShowProfile(false); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
                     <User className="w-4 h-4" /> My Profile
                   </button>
-                  <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                  <button onClick={() => { setShowBillingModal(true); setShowProfile(false); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
                     <CreditCard className="w-4 h-4" /> Billing
                   </button>
                   <div className={`border-t mt-2 pt-2 ${settings.dark_mode ? 'border-gray-700' : 'border-gray-100'}`}>
@@ -424,6 +426,62 @@ function App() {
           {renderContent()}
         </main>
       </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowProfileModal(false)}>
+          <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative ${settings.dark_mode ? 'bg-gray-800 text-white' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowProfileModal(false)} className={`absolute top-4 right-4 ${settings.dark_mode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><User className="w-6 h-6 text-blue-500" /> My Profile</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
+                <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.full_name}</div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
+                <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.email}</div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Role</label>
+                <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.role}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Billing Modal */}
+      {showBillingModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowBillingModal(false)}>
+          <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative ${settings.dark_mode ? 'bg-gray-800 text-white' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowBillingModal(false)} className={`absolute top-4 right-4 ${settings.dark_mode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><CreditCard className="w-6 h-6 text-indigo-500" /> Billing Details</h2>
+            <div className={`p-4 rounded-xl border mb-6 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-indigo-50 border-indigo-100'}`}>
+              <p className="text-sm font-medium mb-1">Current Plan: <span className="font-bold text-indigo-600">Enterprise Voice AI</span></p>
+              <p className={`text-xs ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Active subscription. Renews on 1st of next month.</p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className={`text-sm ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Vapi Minutes Used</span>
+                <span className="font-semibold">342 / 10,000</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className={`text-sm ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>LangGraph Triggers</span>
+                <span className="font-semibold">342 / Unlimited</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className={`text-sm ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Current Balance</span>
+                <span className="font-bold text-green-600">$45.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
