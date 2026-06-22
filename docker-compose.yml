@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - VAPI_API_KEY=${VAPI_API_KEY}
+      - VAPI_PHONE_NUMBER_ID=${VAPI_PHONE_NUMBER_ID}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DB_NAME=krid_ai_db
+      - PUBLIC_URL=${PUBLIC_URL}
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:

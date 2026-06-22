@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+motor
+langgraph
+langchain-openai
+langchain-core
+pydantic
+pydantic-settings
+httpx
+python-dotenv
+langchain-groq
