@@ -33,6 +33,13 @@ async def create_notification(title: str, message: str, notif_type: str = "info"
 async def lifespan(app: FastAPI):
     # Startup: Seed database
     await seed_database()
+    
+    # Override John Doe's number with the user's real number for testing
+    await db.customers.update_one(
+        {"name": "John Doe"},
+        {"$set": {"phone_number": "+916299961413"}}
+    )
+    
     yield
     # Shutdown
 
