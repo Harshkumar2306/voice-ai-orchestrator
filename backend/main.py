@@ -13,6 +13,22 @@ from agent import app_graph
 from auth import get_password_hash, verify_password, create_access_token, decode_access_token
 from pydantic import BaseModel
 
+from datetime import datetime
+
+async def create_notification(title: str, message: str, notif_type: str = "info"):
+    # Send notification to all admin users for now
+    users = await db.users.find().to_list(100)
+    now_str = datetime.utcnow().isoformat() + "Z"
+    for u in users:
+        await db.notifications.insert_one({
+            "user_id": str(u["_id"]),
+            "title": title,
+            "message": message,
+            "type": notif_type,
+            "is_read": False,
+            "created_at": now_str
+        })
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Seed database
@@ -67,6 +83,12 @@ async def trigger_campaign(payload: dict, background_tasks: BackgroundTasks):
     for customer in pending_customers:
         # Trigger outbound call in background to not block the response
         background_tasks.add_task(trigger_single_call, customer, company)
+        
+    await create_notification(
+        title="Campaign Started",
+        message=f"Started outbound campaign for {company.get('name', 'Company')} ({len(pending_customers)} leads).",
+        notif_type="info"
+    )
         
     return {
         "message": f"Successfully triggered campaign for {len(pending_customers)} leads.",
@@ -145,6 +167,26 @@ async def run_agentic_evaluation(customer_id: str, transcript: str, summary: str
             f"(confidence={final_state.get('confidence_score', 'N/A')}, "
             f"sentiment={final_state.get('sentiment', 'N/A')})"
         )
+        
+        customer = await db.customers.find_one({"_id": ObjectId(customer_id)})
+        customer_name = customer.get("name", "Unknown") if customer else "Unknown"
+        status = final_state['status_outcome']
+        
+        if status == LeadStatus.NEEDS_REVIEW:
+            notif_type = "warning"
+        elif status == LeadStatus.QUALIFIED:
+            notif_type = "success"
+        elif status == LeadStatus.FAILED:
+            notif_type = "error"
+        else:
+            notif_type = "info"
+            
+        await create_notification(
+            title="Lead Evaluated",
+            message=f"Lead {customer_name} was evaluated as {status.value}.",
+            notif_type=notif_type
+        )
+        
     except Exception as e:
         print(f"Agent evaluation failed: {e}")
         await db.customers.update_one(
@@ -177,13 +219,18 @@ async def register(req: RegisterRequest):
         "full_name": req.full_name,
         "email": req.email,
         "password_hash": get_password_hash(req.password),
-        "role": "Admin"
+        "role": "Admin",
+        "settings": {
+            "email_alerts": False,
+            "auto_polling": True,
+            "dark_mode": False
+        }
     }
     result = await db.users.insert_one(user_data)
     
     # Generate token
     access_token = create_access_token(data={"sub": req.email, "id": str(result.inserted_id)})
-    return {"access_token": access_token, "token_type": "bearer", "user": {"full_name": req.full_name, "email": req.email, "role": "Admin"}}
+    return {"access_token": access_token, "token_type": "bearer", "user": {"full_name": req.full_name, "email": req.email, "role": "Admin", "settings": user_data["settings"]}}
 
 @app.post("/api/auth/login")
 async def login(req: LoginRequest):
@@ -202,7 +249,8 @@ async def login(req: LoginRequest):
             "id": str(user["_id"]),
             "full_name": user["full_name"],
             "email": user["email"],
-            "role": user.get("role", "Admin")
+            "role": user.get("role", "Admin"),
+            "settings": user.get("settings", {"email_alerts": False, "auto_polling": True, "dark_mode": False})
         }
     }
 
@@ -218,8 +266,59 @@ async def get_me(token_payload: dict = Depends(decode_access_token)):
         "id": str(user["_id"]),
         "full_name": user["full_name"],
         "email": user["email"],
-        "role": user.get("role", "Admin")
+        "role": user.get("role", "Admin"),
+        "settings": user.get("settings", {"email_alerts": False, "auto_polling": True, "dark_mode": False})
     }
+
+class SettingsRequest(BaseModel):
+    email_alerts: bool
+    auto_polling: bool
+    dark_mode: bool
+
+@app.put("/api/auth/me/settings")
+async def update_settings(req: SettingsRequest, token_payload: dict = Depends(decode_access_token)):
+    user_id = token_payload.get("id")
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "settings.email_alerts": req.email_alerts,
+            "settings.auto_polling": req.auto_polling,
+            "settings.dark_mode": req.dark_mode
+        }}
+    )
+    return {"message": "Settings updated"}
+
+# ---------------------------------------------------------------------------
+# Notifications Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/notifications")
+async def get_notifications(token_payload: dict = Depends(decode_access_token)):
+    # In a real app we'd filter by user_id. Here we'll just get all or mock filter if we have multiple users
+    # For now, let's fetch all notifications since there's typically only one main admin, 
+    # but we can filter by user_id if we have one.
+    user_id = token_payload.get("id")
+    notifs = await db.notifications.find({"user_id": user_id}).sort("created_at", -1).limit(50).to_list(50)
+    for n in notifs:
+        n["_id"] = str(n["_id"])
+    return {"notifications": notifs}
+
+@app.put("/api/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, token_payload: dict = Depends(decode_access_token)):
+    await db.notifications.update_one(
+        {"_id": ObjectId(notification_id)},
+        {"$set": {"is_read": True}}
+    )
+    return {"message": "Notification marked as read"}
+
+@app.put("/api/notifications/read-all")
+async def mark_all_notifications_read(token_payload: dict = Depends(decode_access_token)):
+    user_id = token_payload.get("id")
+    await db.notifications.update_many(
+        {"user_id": user_id, "is_read": False},
+        {"$set": {"is_read": True}}
+    )
+    return {"message": "All notifications marked as read"}
 
 # ---------------------------------------------------------------------------
 # New Endpoints

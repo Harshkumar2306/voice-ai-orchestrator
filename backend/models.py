@@ -58,12 +58,31 @@ class CallLog(BaseModel):
         populate_by_name = True
         json_encoders = {ObjectId: str}
 
+class UserSettings(BaseModel):
+    email_alerts: bool = False
+    auto_polling: bool = True
+    dark_mode: bool = False
+
 class User(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     full_name: str
     email: str
     password_hash: str
     role: str = "Admin"
+    settings: UserSettings = Field(default_factory=UserSettings)
+    
+    class Config:
+        populate_by_name = True
+        json_encoders = {ObjectId: str}
+
+class Notification(BaseModel):
+    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    user_id: str
+    title: str
+    message: str
+    type: str = "info"  # info, success, warning, error
+    is_read: bool = False
+    created_at: str
     
     class Config:
         populate_by_name = True

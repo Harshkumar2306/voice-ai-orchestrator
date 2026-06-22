@@ -56,5 +56,24 @@ export const getAnalytics = async (companyId) => {
   const response = await api.get(`/analytics/${companyId}`);
   return response.data;
 };
+export const updateSettings = async (settingsData) => {
+  const response = await api.put('/auth/me/settings', settingsData);
+  return response.data;
+};
+
+export const getNotifications = async () => {
+  const response = await api.get('/notifications');
+  return response.data;
+};
+
+export const markNotificationRead = async (id) => {
+  const response = await api.put(`/notifications/${id}/read`);
+  return response.data;
+};
+
+export const markAllNotificationsRead = async () => {
+  const response = await api.put('/notifications/read-all');
+  return response.data;
+};
 
 export default api;
