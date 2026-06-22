@@ -114,19 +114,6 @@ const AuthForm = ({ onAuthSuccess }) => {
             />
           </div>
 
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full pl-12 pr-4 py-3 bg-white/50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all shadow-sm"
-            />
-          </div>
-
           {!isResettingPassword && (
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
