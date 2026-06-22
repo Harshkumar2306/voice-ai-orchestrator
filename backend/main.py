@@ -13,6 +13,8 @@ from agent import app_graph
 from auth import get_password_hash, verify_password, create_access_token, decode_access_token
 from pydantic import BaseModel
 
+import secrets
+import string
 from datetime import datetime
 
 async def create_notification(title: str, message: str, notif_type: str = "info"):
@@ -228,6 +230,29 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+
+@app.post("/api/auth/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    user = await db.users.find_one({"email": req.email})
+    if not user:
+        raise HTTPException(status_code=404, detail="Email not found in our system")
+        
+    # Generate temporary password
+    alphabet = string.ascii_letters + string.digits
+    temp_password = ''.join(secrets.choice(alphabet) for i in range(8))
+    
+    # Update hash
+    new_hash = get_password_hash(temp_password)
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    # In a real app we'd email this. For prototype we return it.
+    return {"message": "Password reset successful", "temporary_password": temp_password}
 
 @app.post("/api/auth/register")
 async def register(req: RegisterRequest):
