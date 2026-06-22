@@ -309,6 +309,26 @@ async def update_settings(req: SettingsRequest, token_payload: dict = Depends(de
     )
     return {"message": "Settings updated"}
 
+class PasswordUpdateRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+@app.put("/api/auth/me/password")
+async def update_password(req: PasswordUpdateRequest, token_payload: dict = Depends(decode_access_token)):
+    user_id = token_payload.get("id")
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if not verify_password(req.current_password, user["password_hash"]):
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+        
+    new_hash = get_password_hash(req.new_password)
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"password_hash": new_hash}}
+    )
+    return {"message": "Password updated successfully"}
 # ---------------------------------------------------------------------------
 # Notifications Endpoints
 # ---------------------------------------------------------------------------

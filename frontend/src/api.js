@@ -61,6 +61,11 @@ export const updateSettings = async (settingsData) => {
   return response.data;
 };
 
+export const updatePassword = async (passwordData) => {
+  const response = await api.put('/auth/me/password', passwordData);
+  return response.data;
+};
+
 export const getNotifications = async () => {
   const response = await api.get('/notifications');
   return response.data;

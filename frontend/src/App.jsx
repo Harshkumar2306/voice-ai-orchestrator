@@ -3,7 +3,7 @@ import Dashboard from './components/Dashboard';
 import AgentsConfig from './components/AgentsConfig';
 import CallLogs from './components/CallLogs';
 import AuthForm from './components/AuthForm';
-import { getMe, updateSettings, getNotifications, markNotificationRead, markAllNotificationsRead } from './api';
+import { getMe, updateSettings, getNotifications, markNotificationRead, markAllNotificationsRead, updatePassword } from './api';
 import { LayoutDashboard, Settings, Bell, Search, Mic, User, CreditCard, LogOut, X, ScrollText, Loader2, Check } from 'lucide-react';
 
 function App() {
@@ -15,6 +15,15 @@ function App() {
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Password Update State
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   
   // Auth state
   const [user, setUser] = useState(null);
@@ -130,6 +139,42 @@ function App() {
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      await updatePassword({
+        current_password: oldPassword,
+        new_password: newPassword
+      });
+      setPasswordSuccess('Password updated successfully');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        setIsChangingPassword(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (err) {
+      setPasswordError(err.response?.data?.detail || 'Failed to update password');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -448,6 +493,69 @@ function App() {
                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Role</label>
                 <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.role}</div>
               </div>
+
+              {!isChangingPassword ? (
+                <button
+                  onClick={() => setIsChangingPassword(true)}
+                  className={`mt-4 w-full py-2 px-4 border rounded-lg text-sm font-medium transition-colors ${settings.dark_mode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                >
+                  Change Password
+                </button>
+              ) : (
+                <form onSubmit={handleUpdatePassword} className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+                  <h3 className="text-sm font-bold">Update Password</h3>
+                  
+                  {passwordError && <div className="p-2 bg-red-50 text-red-600 text-xs rounded border border-red-100">{passwordError}</div>}
+                  {passwordSuccess && <div className="p-2 bg-green-50 text-green-600 text-xs rounded border border-green-100">{passwordSuccess}</div>}
+
+                  <div>
+                    <input 
+                      type="password" 
+                      placeholder="Current Password" 
+                      required
+                      value={oldPassword}
+                      onChange={e => setOldPassword(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                    />
+                  </div>
+                  <div>
+                    <input 
+                      type="password" 
+                      placeholder="New Password" 
+                      required
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                    />
+                  </div>
+                  <div>
+                    <input 
+                      type="password" 
+                      placeholder="Confirm New Password" 
+                      required
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsChangingPassword(false)}
+                      className="flex-1 py-2 px-4 border rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isUpdatingPassword}
+                      className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-70"
+                    >
+                      {isUpdatingPassword ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>
