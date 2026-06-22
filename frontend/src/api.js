@@ -76,4 +76,14 @@ export const markAllNotificationsRead = async () => {
   return response.data;
 };
 
+export const updateCompanyInstructions = async (companyId, instructions) => {
+  const response = await api.put(`/companies/${companyId}/instructions`, { instructions });
+  return response.data;
+};
+
+export const exportLeadsCsv = async (companyId) => {
+  const response = await api.get(`/customers/${companyId}/export`, { responseType: 'blob' });
+  return response.data;
+};
+
 export default api;

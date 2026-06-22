@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle } from 'lucide-react';
-import { getCompanies, getCustomers, triggerCampaign, getAnalytics } from '../api';
+import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download } from 'lucide-react';
+import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv } from '../api';
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
@@ -318,6 +318,26 @@ const Dashboard = () => {
                   className="pl-9 pr-4 py-2 w-full lg:w-48 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                 />
               </div>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const blob = await exportLeadsCsv(selectedCompanyId);
+                    const url = window.URL.createObjectURL(new Blob([blob]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `${selectedCompany?.name || 'leads'}_export.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                  } catch (e) { console.error('Export failed', e); }
+                }}
+                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-sm bg-white border border-gray-200 text-gray-600 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm active:scale-95"
+                title="Export leads as CSV"
+              >
+                <Download className="w-4 h-4" />
+                CSV
+              </button>
 
               <button
                 onClick={handleTriggerCampaign}

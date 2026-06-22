@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getCompanies } from '../api';
-import { Bot, Save, AlertCircle } from 'lucide-react';
+import { getCompanies, updateCompanyInstructions } from '../api';
+import { Bot, Save, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import PipelineVisualizer from './PipelineVisualizer';
 
 const AgentsConfig = () => {
   const [companies, setCompanies] = useState([]);
@@ -8,6 +9,8 @@ const AgentsConfig = () => {
   const [instructions, setInstructions] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -35,10 +38,19 @@ const AgentsConfig = () => {
     }
   };
 
-  const handleSave = () => {
-    // For now, just simulate a save. 
-    // In a full implementation, this would call an API endpoint to update the DB.
-    alert('Agent instructions saved successfully for this tenant space!');
+  const handleSave = async () => {
+    if (!selectedCompanyId) return;
+    setSaving(true);
+    setError('');
+    try {
+      await updateCompanyInstructions(selectedCompanyId, instructions);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to save agent instructions.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const selectedCompany = companies.find((c) => c._id === selectedCompanyId);
@@ -97,11 +109,38 @@ const AgentsConfig = () => {
           <div className="mt-6 flex justify-end">
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-md hover:shadow-lg active:scale-95"
+              disabled={saving}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-md hover:shadow-lg active:scale-95"
             >
-              <Save className="w-4 h-4" />
-              Save Configuration
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {saving ? 'Saving...' : 'Save Configuration'}
             </button>
+          </div>
+
+          {/* LangGraph Pipeline */}
+          <div className="mt-8 pt-6 border-t border-gray-200/80">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Bot className="w-5 h-5 text-purple-500" />
+              LangGraph Pipeline
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Visual representation of the AI agent's decision flow and state transitions.
+            </p>
+            <PipelineVisualizer />
+          </div>
+        </div>
+      )}
+
+      {/* Success Toast */}
+      {saveSuccess && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
+          <div className="flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg shadow-emerald-200/50">
+            <CheckCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">Agent instructions saved successfully!</p>
           </div>
         </div>
       )}

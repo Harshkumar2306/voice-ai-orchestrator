@@ -321,7 +321,55 @@ async def mark_all_notifications_read(token_payload: dict = Depends(decode_acces
     return {"message": "All notifications marked as read"}
 
 # ---------------------------------------------------------------------------
-# New Endpoints
+# Company Management Endpoints
+# ---------------------------------------------------------------------------
+
+class InstructionsRequest(BaseModel):
+    instructions: str
+
+@app.put("/api/companies/{company_id}/instructions")
+async def update_company_instructions(company_id: str, req: InstructionsRequest):
+    """Update the AI agent instructions for a specific company/tenant."""
+    result = await db.companies.update_one(
+        {"_id": ObjectId(company_id)},
+        {"$set": {"instructions": req.instructions}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return {"message": "Instructions updated successfully"}
+
+@app.get("/api/customers/{company_id}/export")
+async def export_customers_csv(company_id: str):
+    """Export all customers for a company as a CSV file."""
+    from fastapi.responses import StreamingResponse
+    import io
+    import csv
+
+    customers = await db.customers.find({"company_id": company_id}).to_list(500)
+    company = await db.companies.find_one({"_id": ObjectId(company_id)})
+    company_name = company.get("name", "Company") if company else "Company"
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Name", "Phone", "Email", "Status", "Created At"])
+    for c in customers:
+        writer.writerow([
+            c.get("name", ""),
+            c.get("phone_number", ""),
+            c.get("email", ""),
+            c.get("status", ""),
+            c.get("created_at", ""),
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={company_name.replace(' ', '_')}_leads.csv"}
+    )
+
+# ---------------------------------------------------------------------------
+# Call Logs & Analytics Endpoints
 # ---------------------------------------------------------------------------
 
 @app.get("/api/call-logs/{company_id}")
