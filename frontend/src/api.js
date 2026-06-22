@@ -24,4 +24,14 @@ export const triggerCampaign = async (companyId) => {
   return response.data;
 };
 
+export const getCallLogs = async (companyId) => {
+  const response = await api.get(`/call-logs/${companyId}`);
+  return response.data;
+};
+
+export const getAnalytics = async (companyId) => {
+  const response = await api.get(`/analytics/${companyId}`);
+  return response.data;
+};
+
 export default api;

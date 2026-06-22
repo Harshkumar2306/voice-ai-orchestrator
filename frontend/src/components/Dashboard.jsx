@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter } from 'lucide-react';
-import { getCompanies, getCustomers, triggerCampaign } from '../api';
+import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle } from 'lucide-react';
+import { getCompanies, getCustomers, triggerCampaign, getAnalytics } from '../api';
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
@@ -47,14 +47,47 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+const AnimatedCounter = ({ value, label, icon: Icon, color, bgColor }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value || 0;
+    if (end === 0) { setDisplayValue(0); return; }
+    const duration = 600;
+    const stepTime = Math.max(Math.floor(duration / end), 30);
+    const timer = setInterval(() => {
+      start += 1;
+      setDisplayValue(start);
+      if (start >= end) clearInterval(timer);
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return (
+    <div className="glass-panel rounded-xl p-4 flex items-center gap-4 group hover:shadow-md transition-all">
+      <div className={`w-12 h-12 rounded-xl ${bgColor} flex items-center justify-center ${color} group-hover:scale-110 transition-transform`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-gray-900">{displayValue}{typeof value === 'string' && value.includes('%') ? '%' : ''}</p>
+        <p className="text-xs text-gray-500 font-medium">{label}</p>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = () => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [customers, setCustomers] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [triggering, setTriggering] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPolling, setIsPolling] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null);
 
   useEffect(() => {
     fetchCompanies();
@@ -63,10 +96,24 @@ const Dashboard = () => {
   useEffect(() => {
     if (selectedCompanyId) {
       fetchCustomers(selectedCompanyId);
+      fetchAnalytics(selectedCompanyId);
     } else {
       setCustomers([]);
+      setAnalytics(null);
     }
   }, [selectedCompanyId]);
+
+  // Auto-polling: refresh every 5 seconds when a campaign is active
+  useEffect(() => {
+    let interval;
+    if (isPolling && selectedCompanyId) {
+      interval = setInterval(() => {
+        fetchCustomers(selectedCompanyId);
+        fetchAnalytics(selectedCompanyId);
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [isPolling, selectedCompanyId]);
 
   const fetchCompanies = async () => {
     try {
@@ -86,10 +133,24 @@ const Dashboard = () => {
     try {
       const data = await getCustomers(companyId);
       setCustomers(data.customers || []);
+      // Stop polling if no more CALL_INITIATED leads
+      const hasActiveCalls = (data.customers || []).some(c => c.status === 'CALL_INITIATED');
+      if (!hasActiveCalls && isPolling) {
+        setIsPolling(false);
+      }
     } catch (err) {
       setError('Failed to load leads for this tenant.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async (companyId) => {
+    try {
+      const data = await getAnalytics(companyId);
+      setAnalytics(data);
+    } catch (err) {
+      // Analytics is optional, don't show error
     }
   };
 
@@ -100,6 +161,8 @@ const Dashboard = () => {
     try {
       await triggerCampaign(selectedCompanyId);
       await fetchCustomers(selectedCompanyId);
+      // Start auto-polling to watch for status changes
+      setIsPolling(true);
     } catch (err) {
       setError('Failed to initiate outbound campaign.');
     } finally {
@@ -114,6 +177,9 @@ const Dashboard = () => {
   );
 
   const pendingCount = customers.filter(c => c.status === 'PENDING').length;
+  const qualifiedCount = customers.filter(c => c.status === 'QUALIFIED').length;
+  const notInterestedCount = customers.filter(c => c.status === 'NOT_INTERESTED').length;
+  const needsReviewCount = customers.filter(c => c.status === 'NEEDS_REVIEW').length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -148,7 +214,7 @@ const Dashboard = () => {
           </div>
           
           <button
-            onClick={() => fetchCustomers(selectedCompanyId)}
+            onClick={() => { fetchCustomers(selectedCompanyId); fetchAnalytics(selectedCompanyId); }}
             className="p-2.5 text-gray-500 bg-white border border-gray-200/80 hover:border-blue-300 hover:text-blue-600 shadow-sm rounded-xl transition-all active:scale-95 flex items-center justify-center"
             title="Refresh Leads Data"
           >
@@ -157,10 +223,69 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Auto-polling indicator */}
+      {isPolling && (
+        <div className="bg-blue-50/90 backdrop-blur-md border border-blue-200 text-blue-700 p-3 rounded-xl flex items-center gap-3 shadow-sm animate-fade-in">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+          <p className="text-sm font-medium">Live monitoring active — Dashboard auto-refreshes every 5 seconds</p>
+          <button onClick={() => setIsPolling(false)} className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline">Stop</button>
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50/90 backdrop-blur-md border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-3 shadow-sm animate-fade-in">
           <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <p className="text-sm font-medium">{error}</p>
+        </div>
+      )}
+
+      {/* Analytics Cards */}
+      {selectedCompanyId && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <AnimatedCounter value={customers.length} label="Total Leads" icon={Users} color="text-blue-600" bgColor="bg-blue-50" />
+          <AnimatedCounter value={qualifiedCount} label="Qualified" icon={UserCheck} color="text-emerald-600" bgColor="bg-emerald-50" />
+          <AnimatedCounter value={notInterestedCount} label="Not Interested" icon={UserX} color="text-rose-600" bgColor="bg-rose-50" />
+          <AnimatedCounter value={needsReviewCount} label="Needs Review" icon={AlertTriangle} color="text-amber-600" bgColor="bg-amber-50" />
+        </div>
+      )}
+
+      {/* Lead Detail Modal */}
+      {selectedLead && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedLead(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setSelectedLead(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <XCircle className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-100 to-teal-100 border-2 border-white shadow-md flex items-center justify-center text-blue-700 font-bold text-xl uppercase">
+                {selectedLead.name.charAt(0)}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{selectedLead.name}</h3>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <Phone className="w-3.5 h-3.5" /> {selectedLead.phone_number}
+                </p>
+                {selectedLead.email && <p className="text-xs text-gray-400 mt-0.5">{selectedLead.email}</p>}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm text-gray-600 font-medium">Current Status</span>
+                <StatusBadge status={selectedLead.status} />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                <span className="text-sm text-gray-600 font-medium">Company</span>
+                <span className="text-sm font-semibold text-gray-900">{selectedCompany?.name}</span>
+              </div>
+              {selectedLead.created_at && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                  <span className="text-sm text-gray-600 font-medium">Added On</span>
+                  <span className="text-sm text-gray-700">{new Date(selectedLead.created_at).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -266,9 +391,14 @@ const Dashboard = () => {
                           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center text-gray-600 font-bold text-xs uppercase shadow-sm">
                             {customer.name.charAt(0)}
                           </div>
-                          <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                            {customer.name}
-                          </span>
+                          <div>
+                            <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                              {customer.name}
+                            </span>
+                            {customer.email && (
+                              <p className="text-xs text-gray-400">{customer.email}</p>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -281,7 +411,10 @@ const Dashboard = () => {
                         <StatusBadge status={customer.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button className="text-gray-400 hover:text-blue-600 transition-colors px-2 py-1 rounded">
+                        <button 
+                          onClick={() => setSelectedLead(customer)}
+                          className="text-gray-400 hover:text-blue-600 transition-colors px-2 py-1 rounded"
+                        >
                           View details
                         </button>
                       </td>

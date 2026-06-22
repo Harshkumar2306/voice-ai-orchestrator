@@ -124,24 +124,145 @@ async def vapi_webhook(request: Request, background_tasks: BackgroundTasks):
     return JSONResponse({"status": "success"})
 
 async def run_agentic_evaluation(customer_id: str, transcript: str, summary: str):
+    """Run the enhanced 4-node LangGraph pipeline for lead evaluation."""
     print(f"Running LangGraph evaluation for customer {customer_id}")
     initial_state = {
         "customer_id": customer_id,
         "transcript": transcript,
         "summary": summary,
         "status_outcome": LeadStatus.NEEDS_REVIEW,
-        "reasoning": ""
+        "reasoning": "",
+        "confidence_score": 0.0,
+        "sentiment": "NEUTRAL",
     }
     
     try:
         final_state = await app_graph.ainvoke(initial_state)
-        print(f"Evaluation finished: {final_state['status_outcome']}")
+        print(
+            f"Evaluation finished: {final_state['status_outcome']} "
+            f"(confidence={final_state.get('confidence_score', 'N/A')}, "
+            f"sentiment={final_state.get('sentiment', 'N/A')})"
+        )
     except Exception as e:
         print(f"Agent evaluation failed: {e}")
         await db.customers.update_one(
             {"_id": ObjectId(customer_id)},
             {"$set": {"status": LeadStatus.NEEDS_REVIEW.value}}
         )
+
+
+# ---------------------------------------------------------------------------
+# New Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/call-logs/{company_id}")
+async def get_call_logs(company_id: str):
+    """Return all call logs for customers belonging to this company.
+
+    Joins each call log with the customer record to include the customer's
+    name, phone number, and email alongside the log data.
+    """
+    # First, find all customer IDs belonging to this company
+    customers = await db.customers.find(
+        {"company_id": company_id}
+    ).to_list(500)
+
+    if not customers:
+        return {"call_logs": [], "total": 0}
+
+    # Build a lookup map: customer_id (str) → customer info
+    customer_map = {}
+    for c in customers:
+        cid = str(c["_id"])
+        customer_map[cid] = {
+            "customer_name": c.get("name", "Unknown"),
+            "phone_number": c.get("phone_number", ""),
+            "email": c.get("email", ""),
+        }
+
+    customer_ids = list(customer_map.keys())
+
+    # Fetch call logs for those customers
+    call_logs = await db.call_logs.find(
+        {"customer_id": {"$in": customer_ids}}
+    ).to_list(1000)
+
+    enriched_logs = []
+    for log in call_logs:
+        log["_id"] = str(log["_id"])
+        cid = log.get("customer_id", "")
+        cust_info = customer_map.get(cid, {})
+        log["customer_name"] = cust_info.get("customer_name", "Unknown")
+        log["phone_number"] = cust_info.get("phone_number", "")
+        log["email"] = cust_info.get("email", "")
+        enriched_logs.append(log)
+
+    return {"call_logs": enriched_logs, "total": len(enriched_logs)}
+
+
+@app.get("/api/analytics/{company_id}")
+async def get_analytics(company_id: str):
+    """Return aggregate analytics for a given company.
+
+    Metrics:
+        - total_leads: total number of customers for this company
+        - qualified_count: leads marked QUALIFIED
+        - not_interested_count: leads marked NOT_INTERESTED
+        - pending_count: leads still PENDING
+        - failed_count: leads marked FAILED
+        - needs_review_count: leads flagged NEEDS_REVIEW
+        - conversion_rate: qualified / total_leads (percentage)
+    """
+    customers = await db.customers.find(
+        {"company_id": company_id}
+    ).to_list(500)
+
+    total_leads = len(customers)
+
+    # Count by status
+    qualified_count = sum(
+        1 for c in customers if c.get("status") == LeadStatus.QUALIFIED.value
+    )
+    not_interested_count = sum(
+        1 for c in customers if c.get("status") == LeadStatus.NOT_INTERESTED.value
+    )
+    pending_count = sum(
+        1 for c in customers if c.get("status") == LeadStatus.PENDING.value
+    )
+    failed_count = sum(
+        1 for c in customers if c.get("status") == LeadStatus.FAILED.value
+    )
+    needs_review_count = sum(
+        1 for c in customers if c.get("status") == LeadStatus.NEEDS_REVIEW.value
+    )
+
+    conversion_rate = (
+        round((qualified_count / total_leads) * 100, 2)
+        if total_leads > 0
+        else 0.0
+    )
+
+    return {
+        "company_id": company_id,
+        "total_leads": total_leads,
+        "qualified_count": qualified_count,
+        "not_interested_count": not_interested_count,
+        "pending_count": pending_count,
+        "failed_count": failed_count,
+        "needs_review_count": needs_review_count,
+        "conversion_rate": conversion_rate,
+    }
+
+
+@app.get("/api/health")
+async def health_check():
+    """Simple health-check endpoint for uptime monitors and load balancers."""
+    return {
+        "status": "healthy",
+        "service": "Voice AI Orchestrator",
+        "version": "1.0.0",
+    }
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
