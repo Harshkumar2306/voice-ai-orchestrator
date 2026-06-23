@@ -5,8 +5,9 @@ An end-to-end cloud-native SaaS for real estate agencies (and other tenants) to 
 Built using **FastAPI, LangGraph, MongoDB, Vapi AI, and React + Tailwind CSS**.
 
 **Live Demo:**
-- 🌐 Frontend: [Vercel Deployment URL]
-- ⚙️ Backend API: [Render Deployment URL]
+- 🌐 Frontend: https://voice-ai-orchestrator.vercel.app/
+- ⚙️ Backend API: https://voice-ai-orchestrator.onrender.com
+- 📹 Demo Video: https://drive.google.com/file/d/1PUZsjYbXhfiW3QRTQrSBHKbsuvD9ynGs/view?usp=sharing
 
 ---
 
