@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2 } from 'lucide-react';
+import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2, Mic, MicOff } from 'lucide-react';
 import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv, addCustomer } from '../api';
+import Vapi from '@vapi-ai/web';
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
@@ -96,6 +97,92 @@ const Dashboard = () => {
   const [newLeadEmail, setNewLeadEmail] = useState('');
   const [addingLead, setAddingLead] = useState(false);
   const [addLeadError, setAddLeadError] = useState('');
+
+  // Web Call State
+  const [webCallState, setWebCallState] = useState('inactive'); // 'inactive', 'connecting', 'active'
+  const [activeWebCustomer, setActiveWebCustomer] = useState(null);
+
+  useEffect(() => {
+    // We only need one Vapi instance per session
+    if (!window.vapiInstance && import.meta.env.VITE_VAPI_PUBLIC_KEY) {
+      window.vapiInstance = new Vapi(import.meta.env.VITE_VAPI_PUBLIC_KEY);
+    }
+    
+    if (!window.vapiInstance) return;
+
+    const onCallStart = () => setWebCallState('active');
+    const onCallEnd = () => {
+      setWebCallState('inactive');
+      setActiveWebCustomer(null);
+      // Wait a moment for webhook to process, then refresh
+      if (selectedCompanyId) {
+        setTimeout(() => fetchCustomers(selectedCompanyId), 3000);
+      }
+    };
+    const onError = (e) => {
+      setWebCallState('inactive');
+      setActiveWebCustomer(null);
+      setError('Web call failed: ' + e.message);
+    };
+
+    window.vapiInstance.on('call-start', onCallStart);
+    window.vapiInstance.on('call-end', onCallEnd);
+    window.vapiInstance.on('error', onError);
+
+    return () => {
+      window.vapiInstance.off('call-start', onCallStart);
+      window.vapiInstance.off('call-end', onCallEnd);
+      window.vapiInstance.off('error', onError);
+    };
+  }, [selectedCompanyId]);
+
+  const handleWebCall = async (customer) => {
+    if (!import.meta.env.VITE_VAPI_PUBLIC_KEY) {
+      setError("Please add VITE_VAPI_PUBLIC_KEY to your environment variables to use Web Calling.");
+      return;
+    }
+    if (!window.vapiInstance) {
+      window.vapiInstance = new Vapi(import.meta.env.VITE_VAPI_PUBLIC_KEY);
+    }
+
+    setWebCallState('connecting');
+    setActiveWebCustomer(customer);
+    setError('');
+    
+    const company = companies.find(c => c._id === selectedCompanyId);
+    const systemPrompt = `You are an AI assistant calling on behalf of ${company?.name || 'our company'}.\nYou are speaking with ${customer.name}.\n${company?.instructions || ''}\nYour goal is to qualify the lead and collect information. Keep the conversation concise and natural.`;
+    
+    const assistant = {
+      model: {
+        provider: "openai",
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "system", content: systemPrompt }]
+      },
+      voice: {
+        provider: "11labs",
+        voiceId: "bIHbv24MWmeRgasZH58o"
+      },
+      firstMessage: `Hello ${customer.name}, this is calling from ${company?.name}. How are you today?`,
+      metadata: {
+        customer_id: customer._id,
+        company_id: selectedCompanyId
+      }
+    };
+    
+    try {
+      await window.vapiInstance.start(assistant);
+    } catch (e) {
+      setWebCallState('inactive');
+      setActiveWebCustomer(null);
+      setError('Failed to start web call: ' + e.message);
+    }
+  };
+
+  const endWebCall = () => {
+    if (window.vapiInstance) {
+      window.vapiInstance.stop();
+    }
+  };
 
   useEffect(() => {
     fetchCompanies();
@@ -479,12 +566,40 @@ const Dashboard = () => {
                         <StatusBadge status={customer.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button 
-                          onClick={() => setSelectedLead(customer)}
-                          className="text-gray-400 hover:text-blue-600 transition-colors px-2 py-1 rounded"
-                        >
-                          View details
-                        </button>
+                        <div className="flex justify-end items-center gap-2">
+                          {customer.status === 'PENDING' && (
+                            <button 
+                              onClick={() => {
+                                if (webCallState === 'active' || webCallState === 'connecting') {
+                                  endWebCall();
+                                } else {
+                                  handleWebCall(customer);
+                                }
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                (webCallState === 'active' || webCallState === 'connecting') && activeWebCustomer?._id === customer._id
+                                  ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+                                  : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                              }`}
+                            >
+                              {(webCallState === 'active' || webCallState === 'connecting') && activeWebCustomer?._id === customer._id ? (
+                                <>
+                                  <MicOff className="w-4 h-4" /> End Call
+                                </>
+                              ) : (
+                                <>
+                                  <Mic className="w-4 h-4" /> Web Call
+                                </>
+                              )}
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => setSelectedLead(customer)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors px-2 py-1 rounded"
+                          >
+                            View details
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
