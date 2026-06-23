@@ -89,8 +89,8 @@ def _get_llm():
         return ChatOpenAI(model="gpt-4o-mini", temperature=0)
     elif os.getenv("GROQ_API_KEY"):
         from langchain_groq import ChatGroq
-        # Using Llama 3 on Groq which is completely free
-        return ChatGroq(model="llama3-70b-8192", temperature=0)
+        # Use Llama 3.1 which has excellent native JSON/structured output support
+        return ChatGroq(model="llama-3.1-70b-versatile", temperature=0)
     else:
         raise RuntimeError(
             "No LLM API key provided. Set OPENAI_API_KEY or GROQ_API_KEY."
