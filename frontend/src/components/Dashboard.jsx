@@ -165,6 +165,7 @@ const Dashboard = () => {
         voiceId: "bIHbv24MWmeRgasZH58o"
       },
       serverUrl: import.meta.env.VITE_API_URL + "/webhooks/vapi",
+      serverMessages: ["end-of-call-report", "status-update", "hang", "transcript"],
       firstMessage: `Hello ${customer.name}, this is calling from ${company?.name}. How are you today?`,
       metadata: {
         customer_id: customer._id,
