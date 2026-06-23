@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2, Mic, MicOff } from 'lucide-react';
 import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv, addCustomer } from '../api';
-import Vapi from '@vapi-ai/web';
+import VapiPkg from '@vapi-ai/web';
+
+const Vapi = VapiPkg.default || VapiPkg;
 
 const StatusBadge = ({ status }) => {
   const statusConfig = {
