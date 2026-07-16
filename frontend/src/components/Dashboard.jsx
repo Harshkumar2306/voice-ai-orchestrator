@@ -382,14 +382,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Auto-polling indicator */}
-      {isPolling && (
-        <div className="bg-blue-50/90 backdrop-blur-md border border-blue-200 text-blue-700 p-3 rounded-xl flex items-center gap-3 shadow-sm animate-fade-in">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <p className="text-sm font-medium">Live monitoring active — Dashboard auto-refreshes every 5 seconds</p>
-          <button onClick={() => setIsPolling(false)} className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline">Stop</button>
-        </div>
-      )}
+
 
       {error && (
         <div className="bg-red-50/90 backdrop-blur-md border border-red-200 text-red-700 p-4 rounded-xl flex items-start gap-3 shadow-sm animate-fade-in">
