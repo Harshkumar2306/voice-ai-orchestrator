@@ -56,8 +56,8 @@ const AgentsConfig = () => {
   const selectedCompany = companies.find((c) => c._id === selectedCompanyId);
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+    <div className="space-y-6 h-full flex flex-col overflow-hidden animate-fade-in">
+      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shrink-0">
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-purple-500 to-indigo-400" />
         
         <div className="pl-4">
@@ -92,7 +92,7 @@ const AgentsConfig = () => {
       )}
 
       {selectedCompanyId && (
-        <div className="glass-panel rounded-2xl p-6">
+        <div className="glass-panel rounded-2xl p-6 flex-1 min-h-0 overflow-y-auto custom-scrollbar mb-2 border border-gray-200/60 shadow-sm">
           <h3 className="text-lg font-bold text-gray-900 mb-4">{selectedCompany?.name} - Agent System Prompt</h3>
           <p className="text-sm text-gray-600 mb-4">
             This prompt is injected dynamically into the LangGraph flow and Vapi configuration right before dialing out to a lead.
