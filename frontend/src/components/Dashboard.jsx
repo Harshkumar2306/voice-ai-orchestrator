@@ -342,9 +342,9 @@ const Dashboard = () => {
   const needsReviewCount = customers.filter(c => c.status === 'NEEDS_REVIEW').length;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 h-full flex flex-col overflow-hidden">
       {/* Header and Controls */}
-      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shrink-0">
         {/* Subtle gradient accent */}
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-teal-400" />
         
@@ -444,9 +444,9 @@ const Dashboard = () => {
 
       {/* Main Data Section */}
       {selectedCompanyId && (
-        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col">
+        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm border border-gray-200/60">
           {/* Table Toolbar */}
-          <div className="border-b border-gray-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/40">
+          <div className="border-b border-gray-100 p-4 lg:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/40 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
                 <Users className="w-5 h-5" />
@@ -460,8 +460,8 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
@@ -529,9 +529,9 @@ const Dashboard = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto overflow-y-auto max-h-[500px] rounded-b-2xl">
+          <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 rounded-b-2xl">
             <table className="min-w-full divide-y divide-gray-100 relative">
-              <thead className="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
+              <thead className="bg-gray-50/90 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Customer Name

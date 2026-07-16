@@ -207,7 +207,7 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col relative overflow-hidden ${settings.dark_mode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff]'}`}>
+    <div className={`h-screen flex flex-col relative overflow-hidden ${settings.dark_mode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff]'}`}>
       {/* Decorative background blobs - hide in dark mode for simplicity */}
       {!settings.dark_mode && (
         <>
@@ -409,7 +409,7 @@ function App() {
       </header>
       
       {/* Main Layout Area */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8 overflow-hidden">
         {/* Sidebar */}
         <aside className="hidden lg:block w-64 space-y-1 flex-shrink-0">
           <nav className="space-y-2">
@@ -467,7 +467,7 @@ function App() {
         </aside>
 
         {/* Content */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {renderContent()}
         </main>
       </div>
