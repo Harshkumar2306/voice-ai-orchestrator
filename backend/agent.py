@@ -189,26 +189,29 @@ async def evaluation_node(state: AgentState) -> AgentState:
 
     chain = prompt | structured_llm
 
-    try:
-        result = await chain.ainvoke({
-            "summary": state.get("summary", ""),
-            "transcript": state.get("transcript", ""),
-            "detected_sentiment": detected_sentiment,
-        })
-        return {
-            "status_outcome": result.status,
-            "reasoning": result.reasoning,
-            "confidence_score": result.confidence_score,
-            "sentiment": result.sentiment.value,
-        }
-    except Exception as e:
-        print(f"[evaluation_node] Error: {e}")
-        return {
-            "status_outcome": LeadStatus.NEEDS_REVIEW,
-            "reasoning": "Failed to parse LLM output.",
-            "confidence_score": 0.0,
-            "sentiment": state.get("sentiment", SentimentLabel.NEUTRAL.value),
-        }
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            result = await chain.ainvoke({
+                "summary": state.get("summary", ""),
+                "transcript": state.get("transcript", ""),
+                "detected_sentiment": detected_sentiment,
+            })
+            return {
+                "status_outcome": result.status,
+                "reasoning": result.reasoning,
+                "confidence_score": result.confidence_score,
+                "sentiment": result.sentiment.value,
+            }
+        except Exception as e:
+            print(f"[evaluation_node] Attempt {attempt+1} failed: {e}")
+            if attempt == max_retries - 1:
+                return {
+                    "status_outcome": LeadStatus.NEEDS_REVIEW,
+                    "reasoning": f"Failed to parse LLM output after {max_retries} attempts.",
+                    "confidence_score": 0.0,
+                    "sentiment": state.get("sentiment", SentimentLabel.NEUTRAL.value),
+                }
 
 
 # ---------------------------------------------------------------------------

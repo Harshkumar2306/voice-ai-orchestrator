@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks, Request, HTTPException
+from fastapi import FastAPI, BackgroundTasks, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -16,6 +16,30 @@ from pydantic import BaseModel
 import secrets
 import string
 from datetime import datetime
+
+# ---------------------------------------------------------------------------
+# WebSocket Connection Manager
+# ---------------------------------------------------------------------------
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception as e:
+                print(f"Failed to send websocket message: {e}")
+
+manager = ConnectionManager()
 
 async def create_notification(title: str, message: str, notif_type: str = "info"):
     # Send notification to all admin users for now
@@ -210,12 +234,26 @@ async def run_agentic_evaluation(customer_id: str, transcript: str, summary: str
             notif_type=notif_type
         )
         
+        # Broadcast the real-time update to all connected React clients
+        await manager.broadcast({
+            "type": "lead_updated",
+            "customer_id": customer_id,
+            "status": status.value,
+            "company_id": str(customer.get("company_id")) if customer else None
+        })
+        
     except Exception as e:
         print(f"Agent evaluation failed: {e}")
         await db.customers.update_one(
             {"_id": ObjectId(customer_id)},
             {"$set": {"status": LeadStatus.NEEDS_REVIEW.value}}
         )
+        # Broadcast failure update
+        await manager.broadcast({
+            "type": "lead_updated",
+            "customer_id": customer_id,
+            "status": LeadStatus.NEEDS_REVIEW.value
+        })
 
 
 # ---------------------------------------------------------------------------
@@ -385,6 +423,21 @@ async def mark_all_notifications_read(token_payload: dict = Depends(decode_acces
         {"$set": {"is_read": True}}
     )
     return {"message": "All notifications marked as read"}
+
+# ---------------------------------------------------------------------------
+# WebSocket Endpoint for Real-Time Updates
+# ---------------------------------------------------------------------------
+
+@app.websocket("/api/ws/leads")
+async def websocket_leads_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            # We just keep the connection open, waiting for client disconnection
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        print("WebSocket disconnected")
 
 # ---------------------------------------------------------------------------
 # Company Management Endpoints

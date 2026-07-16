@@ -202,17 +202,32 @@ const Dashboard = () => {
     }
   }, [selectedCompanyId]);
 
-  // Auto-polling: refresh every 5 seconds when a campaign is active
+  // Real-time updates via WebSockets
   useEffect(() => {
-    let interval;
-    if (isPolling && selectedCompanyId) {
-      interval = setInterval(() => {
-        fetchCustomers(selectedCompanyId);
-        fetchAnalytics(selectedCompanyId);
-      }, 5000);
-    }
-    return () => clearInterval(interval);
-  }, [isPolling, selectedCompanyId]);
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+    const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/leads';
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'lead_updated') {
+          // Trigger a refresh of the table and analytics
+          if (selectedCompanyId && (!data.company_id || data.company_id === selectedCompanyId)) {
+             fetchCustomers(selectedCompanyId);
+             fetchAnalytics(selectedCompanyId);
+          }
+        }
+      } catch (e) {
+        console.error("WebSocket parsing error", e);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [selectedCompanyId]);
 
   const fetchCompanies = async () => {
     try {
