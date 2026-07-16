@@ -60,9 +60,9 @@ const CallLogs = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 h-full flex flex-col overflow-hidden animate-fade-in">
       {/* Header */}
-      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="glass-panel rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden shrink-0">
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-orange-500 to-amber-400" />
         <div className="pl-4">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
@@ -99,7 +99,7 @@ const CallLogs = () => {
       )}
 
       {/* Call Logs List */}
-      <div className="glass-panel rounded-2xl overflow-hidden">
+      <div className="glass-panel rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col shadow-sm border border-gray-200/60 mb-2">
         {loading ? (
           <div className="p-8 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -116,7 +116,7 @@ const CallLogs = () => {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
             {callLogs.map((log, index) => (
               <div key={log._id || index} className="group">
                 <button
