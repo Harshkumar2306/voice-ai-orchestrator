@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2, Mic, MicOff } from 'lucide-react';
 import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv, addCustomer } from '../api';
 import VapiPkg from '@vapi-ai/web';
@@ -640,8 +641,8 @@ const Dashboard = () => {
       )}
 
       {/* Add Lead Modal */}
-      {showAddLeadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setShowAddLeadModal(false)}>
+      {showAddLeadModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowAddLeadModal(false)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setShowAddLeadModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
               <XCircle className="w-5 h-5" />
@@ -701,7 +702,8 @@ const Dashboard = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Shimmer animation keyframes added via a style tag since tailwind arb isn't easiest here */}
