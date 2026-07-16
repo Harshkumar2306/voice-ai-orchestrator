@@ -444,9 +444,9 @@ const Dashboard = () => {
 
       {/* Main Data Section */}
       {selectedCompanyId && (
-        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm border border-gray-200/60">
+        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col flex-1 min-h-0 shadow-sm border border-gray-200/60 mb-2">
           {/* Table Toolbar */}
-          <div className="border-b border-gray-100 p-4 lg:p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/40 shrink-0">
+          <div className="border-b border-gray-100 p-4 lg:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/40 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
                 <Users className="w-5 h-5" />
@@ -460,19 +460,19 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-              <div className="relative flex-1 min-w-[200px]">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="Filter leads..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 w-full lg:w-48 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                  className="pl-9 pr-4 py-2 w-full bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                 />
               </div>
 
-              <button
+              <div className="flex items-center gap-2 w-full sm:w-auto">
                 onClick={() => {
                   setAddLeadError('');
                   setShowAddLeadModal(true);
@@ -525,6 +525,7 @@ const Dashboard = () => {
                 )}
                 {triggering ? 'Dialing...' : 'Launch Campaign'}
               </button>
+              </div>
             </div>
           </div>
 
