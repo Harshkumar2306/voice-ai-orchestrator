@@ -528,9 +528,9 @@ const Dashboard = () => {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-gray-50/80 backdrop-blur-sm">
+          <div className="overflow-x-auto overflow-y-auto max-h-[500px] rounded-b-2xl">
+            <table className="min-w-full divide-y divide-gray-100 relative">
+              <thead className="bg-gray-50/80 backdrop-blur-sm sticky top-0 z-10">
                 <tr>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Customer Name
