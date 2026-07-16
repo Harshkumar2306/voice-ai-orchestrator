@@ -473,13 +473,14 @@ const Dashboard = () => {
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                onClick={() => {
-                  setAddLeadError('');
-                  setShowAddLeadModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-all shadow-sm active:scale-95"
-                title="Add custom lead"
-              >
+                <button
+                  onClick={() => {
+                    setAddLeadError('');
+                    setShowAddLeadModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-all shadow-sm active:scale-95"
+                  title="Add custom lead"
+                >
                 <Plus className="w-4 h-4" />
                 Add Lead
               </button>
