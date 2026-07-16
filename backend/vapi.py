@@ -51,6 +51,8 @@ async def trigger_outbound_call(customer: dict, company: dict) -> dict:
                 "voiceId": "bIHbv24MWmeRgasZH58o" # generic voice
             },
             "firstMessage": f"Hello {customer['name']}, this is calling from {company['name']}. How are you today?",
+            "serverUrl": f"{PUBLIC_URL}/api/webhooks/vapi",
+            "serverMessages": ["end-of-call-report", "status-update", "hang", "transcript"],
             # Important: pass customer id in metadata to be received in webhook
             "metadata": {
                 "customer_id": str(customer['_id']),

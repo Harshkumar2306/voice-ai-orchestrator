@@ -89,7 +89,6 @@ const Dashboard = () => {
   const [triggering, setTriggering] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isPolling, setIsPolling] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
 
   // Add Lead Modal State
@@ -202,30 +201,55 @@ const Dashboard = () => {
     }
   }, [selectedCompanyId]);
 
-  // Real-time updates via WebSockets
+  // Real-time updates via WebSockets with Exponential Backoff Reconnection
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-    const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/leads';
-    
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'lead_updated') {
-          // Trigger a refresh of the table and analytics
-          if (selectedCompanyId && (!data.company_id || data.company_id === selectedCompanyId)) {
-             fetchCustomers(selectedCompanyId);
-             fetchAnalytics(selectedCompanyId);
+    let ws;
+    let reconnectTimeout;
+    let attempt = 0;
+
+    const connectWebSocket = () => {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+      const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/leads';
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log("WebSocket connected");
+        attempt = 0; // reset attempts on successful connection
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'lead_updated') {
+            if (selectedCompanyId && (!data.company_id || data.company_id === selectedCompanyId)) {
+               fetchCustomers(selectedCompanyId);
+               fetchAnalytics(selectedCompanyId);
+            }
           }
+        } catch (e) {
+          console.error("WebSocket parsing error", e);
         }
-      } catch (e) {
-        console.error("WebSocket parsing error", e);
-      }
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket disconnected. Attempting to reconnect...");
+        const delay = Math.min(1000 * (2 ** attempt), 30000); // Max 30s delay
+        reconnectTimeout = setTimeout(() => {
+          attempt++;
+          connectWebSocket();
+        }, delay);
+      };
     };
 
+    connectWebSocket();
+
     return () => {
-      ws.close();
+      clearTimeout(reconnectTimeout);
+      if (ws) {
+        ws.onclose = null; // Prevent reconnection trigger on intentional unmount
+        ws.close();
+      }
     };
   }, [selectedCompanyId]);
 
@@ -247,11 +271,6 @@ const Dashboard = () => {
     try {
       const data = await getCustomers(companyId);
       setCustomers(data.customers || []);
-      // Stop polling if no more CALL_INITIATED leads
-      const hasActiveCalls = (data.customers || []).some(c => c.status === 'CALL_INITIATED');
-      if (!hasActiveCalls && isPolling) {
-        setIsPolling(false);
-      }
     } catch (err) {
       setError('Failed to load leads for this tenant.');
     } finally {
@@ -275,8 +294,6 @@ const Dashboard = () => {
     try {
       await triggerCampaign(selectedCompanyId);
       await fetchCustomers(selectedCompanyId);
-      // Start auto-polling to watch for status changes
-      setIsPolling(true);
     } catch (err) {
       setError('Failed to initiate outbound campaign.');
     } finally {
