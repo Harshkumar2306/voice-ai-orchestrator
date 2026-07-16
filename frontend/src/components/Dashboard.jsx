@@ -454,7 +454,7 @@ const Dashboard = () => {
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">{selectedCompany?.name} Leads</h3>
+                <h3 className="text-lg font-bold text-gray-900">Lead Directory</h3>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">{customers.length} Total</span>
                   <span className="text-xs font-medium bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md">{pendingCount} Pending</span>
