@@ -537,19 +537,19 @@ const Dashboard = () => {
             <table className="min-w-full divide-y divide-gray-100 relative">
               <thead className="bg-gray-50/90 backdrop-blur-md sticky top-0 z-10 shadow-sm">
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Customer Name
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Contact Details
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Added On
                   </th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Current Status
                   </th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-4 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -558,15 +558,16 @@ const Dashboard = () => {
                 {loading ? (
                   [...Array(3)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-                      <td className="px-6 py-4"><div className="h-6 bg-gray-200 rounded-full w-24"></div></td>
-                      <td className="px-6 py-4 text-right"><div className="h-4 bg-gray-200 rounded w-8 ml-auto"></div></td>
+                      <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                      <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
+                      <td className="px-4 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+                      <td className="px-4 py-4"><div className="h-6 bg-gray-200 rounded-full w-24"></div></td>
+                      <td className="px-4 py-4 text-right"><div className="h-4 bg-gray-200 rounded w-8 ml-auto"></div></td>
                     </tr>
                   ))
                 ) : filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center">
+                    <td colSpan="5" className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
                           <Filter className="w-6 h-6" />
@@ -578,7 +579,7 @@ const Dashboard = () => {
                 ) : (
                   filteredCustomers.map((customer) => (
                     <tr key={customer._id} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-100 to-gray-200 border border-gray-300 flex items-center justify-center text-gray-600 font-bold text-xs uppercase shadow-sm">
                             {customer.name.charAt(0)}
@@ -593,21 +594,21 @@ const Dashboard = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5 text-sm text-gray-600 font-medium">
                           <Phone className="w-3.5 h-3.5 text-gray-400" />
                           {customer.phone_number}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <span className="text-sm text-gray-500">
                           {customer.created_at ? new Date(customer.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <StatusBadge status={customer.status} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end items-center gap-2">
                           {customer.status === 'PENDING' && (
                             <button 
