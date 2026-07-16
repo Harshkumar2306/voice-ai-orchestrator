@@ -518,10 +518,10 @@ async def get_call_logs(company_id: str):
 
     customer_ids = list(customer_map.keys())
 
-    # Fetch call logs for those customers
+    # Fetch call logs for those customers, sorting by _id descending (latest first)
     call_logs = await db.call_logs.find(
         {"customer_id": {"$in": customer_ids}}
-    ).to_list(1000)
+    ).sort("_id", -1).to_list(1000)
 
     enriched_logs = []
     for log in call_logs:
