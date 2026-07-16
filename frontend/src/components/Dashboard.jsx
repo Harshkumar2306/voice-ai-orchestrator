@@ -331,10 +331,12 @@ const Dashboard = () => {
   };
 
   const selectedCompany = companies.find((c) => c._id === selectedCompanyId);
-  const filteredCustomers = customers.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.phone_number.includes(searchTerm)
-  );
+  const filteredCustomers = customers
+    .filter(c => 
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      c.phone_number.includes(searchTerm)
+    )
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
   const pendingCount = customers.filter(c => c.status === 'PENDING').length;
   const qualifiedCount = customers.filter(c => c.status === 'QUALIFIED').length;
@@ -468,7 +470,7 @@ const Dashboard = () => {
                   placeholder="Filter leads..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 w-full bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                  className="pl-9 pr-4 h-10 w-full bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                 />
               </div>
 
@@ -478,7 +480,7 @@ const Dashboard = () => {
                     setAddLeadError('');
                     setShowAddLeadModal(true);
                   }}
-                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-all shadow-sm active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-4 h-10 rounded-lg font-medium text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 transition-all shadow-sm active:scale-95"
                   title="Add custom lead"
                 >
                 <Plus className="w-4 h-4" />
@@ -498,7 +500,7 @@ const Dashboard = () => {
                     link.remove();
                   } catch (e) { console.error('Export failed', e); }
                 }}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-sm bg-white border border-gray-200 text-gray-600 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm active:scale-95"
+                className="flex items-center justify-center gap-1.5 px-4 h-10 rounded-lg font-medium text-sm bg-white border border-gray-200 text-gray-600 hover:text-emerald-600 hover:border-emerald-300 transition-all shadow-sm active:scale-95"
                 title="Export leads as CSV"
               >
                 <Download className="w-4 h-4" />
@@ -508,7 +510,7 @@ const Dashboard = () => {
               <button
                 onClick={handleTriggerCampaign}
                 disabled={triggering || pendingCount === 0}
-                className={`relative overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all shadow-md group ${
+                className={`relative overflow-hidden flex items-center justify-center gap-2 px-5 h-10 rounded-lg font-medium text-sm transition-all shadow-md group ${
                   triggering || pendingCount === 0
                     ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
                     : 'bg-gray-900 text-white hover:bg-black border border-transparent hover:shadow-lg active:scale-95'
@@ -542,6 +544,9 @@ const Dashboard = () => {
                     Contact Details
                   </th>
                   <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Added On
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     Current Status
                   </th>
                   <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -561,7 +566,7 @@ const Dashboard = () => {
                   ))
                 ) : filteredCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="px-6 py-12 text-center">
+                    <td colSpan="5" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
                           <Filter className="w-6 h-6" />
@@ -593,6 +598,11 @@ const Dashboard = () => {
                           <Phone className="w-3.5 h-3.5 text-gray-400" />
                           {customer.phone_number}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-500">
+                          {customer.created_at ? new Date(customer.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={customer.status} />
