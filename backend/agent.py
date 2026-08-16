@@ -254,16 +254,17 @@ async def state_update_node(state: AgentState) -> AgentState:
     MongoDB so the dashboard reflects the latest outcome.
     """
     customer_id = state["customer_id"]
-    status_outcome = state["status_outcome"]
+    status_outcome = state.get("status_outcome", LeadStatus.NEEDS_REVIEW)
+    status_val = status_outcome.value if hasattr(status_outcome, "value") else str(status_outcome)
 
-    print(f"[state_update_node] Updating customer {customer_id} → {status_outcome.value}")
+    print(f"[state_update_node] Updating customer {customer_id} → {status_val}")
 
     try:
         await db.customers.update_one(
             {"_id": ObjectId(customer_id)},
             {
                 "$set": {
-                    "status": status_outcome.value,
+                    "status": status_val,
                     "confidence_score": state.get("confidence_score", 0.0),
                     "sentiment": state.get("sentiment", "NEUTRAL"),
                 }
@@ -275,7 +276,7 @@ async def state_update_node(state: AgentState) -> AgentState:
             {"customer_id": customer_id, "outcome": "PENDING_EVALUATION"},
             {
                 "$set": {
-                    "outcome": status_outcome.value,
+                    "outcome": status_val,
                     "reasoning": state.get("reasoning", ""),
                     "confidence_score": state.get("confidence_score", 0.0),
                     "sentiment": state.get("sentiment", "NEUTRAL"),

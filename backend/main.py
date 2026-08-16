@@ -89,7 +89,7 @@ async def get_companies():
 
 @app.get("/api/customers/{company_id}")
 async def get_customers(company_id: str):
-    customers = await db.customers.find({"company_id": company_id}).to_list(100)
+    customers = await db.customers.find({"company_id": company_id}).to_list(1000)
     for c in customers:
         c["_id"] = str(c["_id"])
     return {"customers": customers}
@@ -122,7 +122,7 @@ async def trigger_campaign(payload: dict, background_tasks: BackgroundTasks):
     pending_customers = await db.customers.find({
         "company_id": company_id,
         "status": LeadStatus.PENDING.value
-    }).to_list(100)
+    }).to_list(500)
     
     if not pending_customers:
         return {"message": "No pending leads found for this company."}
@@ -217,20 +217,21 @@ async def run_agentic_evaluation(customer_id: str, transcript: str, summary: str
         
         customer = await db.customers.find_one({"_id": ObjectId(customer_id)})
         customer_name = customer.get("name", "Unknown") if customer else "Unknown"
-        status = final_state['status_outcome']
+        status = final_state.get('status_outcome', LeadStatus.NEEDS_REVIEW)
+        status_val = status.value if hasattr(status, 'value') else str(status)
         
-        if status == LeadStatus.NEEDS_REVIEW:
+        if status_val == LeadStatus.NEEDS_REVIEW.value or status == LeadStatus.NEEDS_REVIEW:
             notif_type = "warning"
-        elif status == LeadStatus.QUALIFIED:
+        elif status_val == LeadStatus.QUALIFIED.value or status == LeadStatus.QUALIFIED:
             notif_type = "success"
-        elif status == LeadStatus.FAILED:
+        elif status_val == LeadStatus.FAILED.value or status == LeadStatus.FAILED:
             notif_type = "error"
         else:
             notif_type = "info"
             
         await create_notification(
             title="Lead Evaluated",
-            message=f"Lead {customer_name} was evaluated as {status.value}.",
+            message=f"Lead {customer_name} was evaluated as {status_val}.",
             notif_type=notif_type
         )
         
@@ -238,7 +239,7 @@ async def run_agentic_evaluation(customer_id: str, transcript: str, summary: str
         await manager.broadcast({
             "type": "lead_updated",
             "customer_id": customer_id,
-            "status": status.value,
+            "status": status_val,
             "company_id": str(customer.get("company_id")) if customer else None
         })
         
