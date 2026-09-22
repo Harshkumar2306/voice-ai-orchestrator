@@ -137,10 +137,10 @@ const CallLogs = () => {
   });
 
   return (
-    <div className="space-y-4 sm:space-y-5 h-full flex flex-col overflow-hidden animate-fade-in">
+    <div className="space-y-3 sm:space-y-3.5 flex-1 min-h-0 flex flex-col overflow-hidden h-full animate-fade-in">
       
       {/* Header */}
-      <div className="glass-panel rounded-2xl p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 relative overflow-hidden shrink-0 border border-white/70">
+      <div className="glass-panel rounded-2xl p-3.5 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 relative overflow-hidden shrink-0 border border-white/70">
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-orange-500 to-amber-400" />
         
         <div className="pl-2.5 sm:pl-3">

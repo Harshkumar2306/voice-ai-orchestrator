@@ -584,10 +584,10 @@ function App() {
       )}
       
       {/* Main Workspace Layout */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex gap-6 overflow-hidden">
+      <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-3 pb-3 sm:pt-4 sm:pb-4 flex gap-5 overflow-hidden min-h-0 h-full">
         
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex w-64 flex-col shrink-0">
+        <aside className="hidden lg:flex w-60 flex-col shrink-0">
           <nav className="space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -596,7 +596,7 @@ function App() {
                 <button 
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-semibold border ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-semibold border ${
                     isActive 
                       ? (settings.dark_mode ? 'bg-gray-800 text-blue-400 border-gray-700' : item.activeClass)
                       : (settings.dark_mode ? 'text-gray-400 hover:bg-gray-800 border-transparent' : 'text-gray-600 hover:bg-white/60 border-transparent hover:text-gray-900')
@@ -611,7 +611,7 @@ function App() {
         </aside>
 
         {/* Content Pane */}
-        <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <main className="flex-1 min-w-0 flex flex-col overflow-hidden h-full min-h-0">
           {renderContent()}
         </main>
       </div>
