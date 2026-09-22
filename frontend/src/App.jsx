@@ -4,10 +4,15 @@ import AgentsConfig from './components/AgentsConfig';
 import CallLogs from './components/CallLogs';
 import AuthForm from './components/AuthForm';
 import { getMe, updateSettings, getNotifications, markNotificationRead, markAllNotificationsRead, updatePassword, healthCheck } from './api';
-import { LayoutDashboard, Settings, Bell, Search, Mic, User, CreditCard, LogOut, X, ScrollText, Loader2, Check } from 'lucide-react';
+import { 
+  LayoutDashboard, Settings, Bell, Search, Mic, User, CreditCard, 
+  LogOut, X, ScrollText, Loader2, Check, Menu, Moon, Sun, 
+  ChevronRight, Shield, Activity, PhoneCall
+} from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('campaigns');
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -66,7 +71,7 @@ function App() {
   useEffect(() => {
     const heartbeat = setInterval(() => {
       healthCheck();
-    }, 10 * 60 * 1000); // every 10 minutes
+    }, 10 * 60 * 1000);
     return () => clearInterval(heartbeat);
   }, []);
 
@@ -90,7 +95,7 @@ function App() {
       fetchNotifications();
       intervalId = setInterval(() => {
         fetchNotifications();
-      }, 10000); // every 10 seconds
+      }, 10000);
     }
     return () => clearInterval(intervalId);
   }, [user]);
@@ -105,8 +110,6 @@ function App() {
           setSettings(userData.settings);
         }
       } catch (error) {
-        // ONLY remove token if the server explicitly returned 401 Unauthorized
-        // Do NOT delete token on network errors, timeouts, or 502/503 during cold starts!
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           setUser(null);
@@ -135,24 +138,22 @@ function App() {
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
     setIsSearching(true);
-    setTimeout(() => setIsSearching(false), 500);
+    setTimeout(() => setIsSearching(false), 400);
   };
 
   const handleToggleSetting = async (key) => {
     const newSettings = { ...settings, [key]: !settings[key] };
     setSettings(newSettings);
-    // Update in DB
     try {
       await updateSettings(newSettings);
     } catch (e) {
       console.error("Failed to update settings", e);
-      // Rollback on fail
       setSettings(settings);
     }
   };
 
   const handleMarkRead = async (id, e) => {
-    e.stopPropagation(); // prevent closing
+    e.stopPropagation();
     try {
       await markNotificationRead(id);
       setNotifications(notifications.map(n => n._id === id ? { ...n, is_read: true } : n));
@@ -240,8 +241,15 @@ function App() {
   }
 
   const getInitials = (name) => {
+    if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
   };
+
+  const navItems = [
+    { id: 'campaigns', label: 'Campaigns', icon: LayoutDashboard, color: 'text-blue-600', activeClass: 'text-blue-700 bg-white border-blue-100 shadow-sm' },
+    { id: 'agents', label: 'Agents Configuration', icon: Mic, color: 'text-indigo-600', activeClass: 'text-indigo-700 bg-white border-indigo-100 shadow-sm' },
+    { id: 'logs', label: 'Call Logs', icon: ScrollText, color: 'text-orange-600', activeClass: 'text-orange-700 bg-white border-orange-100 shadow-sm' },
+  ];
 
   const renderContent = () => {
     switch (activeTab) {
@@ -253,149 +261,207 @@ function App() {
   };
 
   return (
-    <div className={`h-screen flex flex-col relative overflow-hidden ${settings.dark_mode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff]'}`}>
-      {/* Decorative background blobs - hide in dark mode for simplicity */}
+    <div className={`h-[100dvh] flex flex-col relative overflow-hidden select-none ${settings.dark_mode ? 'bg-gray-950 text-white' : 'bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff] text-slate-800'}`}>
+      {/* Decorative ambient background glows */}
       {!settings.dark_mode && (
         <>
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-300/30 blur-[100px] pointer-events-none" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-teal-300/30 blur-[100px] pointer-events-none" />
+          <div className="absolute top-[-10%] left-[-10%] w-[45%] h-[45%] rounded-full bg-blue-300/25 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-teal-300/25 blur-[120px] pointer-events-none" />
         </>
       )}
 
       {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in">
-          <div className={`rounded-2xl shadow-2xl w-full max-w-md p-6 relative ${settings.dark_mode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in" onClick={() => setShowSettings(false)}>
+          <div className={`rounded-2xl shadow-2xl w-full max-w-md p-6 relative border ${settings.dark_mode ? 'bg-gray-900 text-white border-gray-800' : 'bg-white text-gray-900 border-gray-100'}`} onClick={e => e.stopPropagation()}>
             <button 
               onClick={() => setShowSettings(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-indigo-500" />
+              <Settings className="w-5 h-5 text-blue-600" />
               Global Settings
             </h2>
             
-            <div className="space-y-4">
-              <div className={`flex items-center justify-between p-3 rounded-xl ${settings.dark_mode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className="space-y-3.5">
+              <div className={`flex items-center justify-between p-3.5 rounded-xl border ${settings.dark_mode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-gray-50 border-gray-100'}`}>
                 <div>
-                  <p className="font-medium text-sm">Email Alerts</p>
-                  <p className={`text-xs ${settings.dark_mode ? 'text-gray-400' : 'text-gray-500'}`}>Receive emails for NEEDS_REVIEW leads</p>
+                  <p className="font-semibold text-sm">Email Alerts</p>
+                  <p className={`text-xs mt-0.5 ${settings.dark_mode ? 'text-gray-400' : 'text-gray-500'}`}>Receive alerts for leads needing human review</p>
                 </div>
-                <div onClick={() => handleToggleSetting('email_alerts')} className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${settings.email_alerts ? 'bg-indigo-500' : 'bg-gray-300'}`}>
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.email_alerts ? 'left-5' : 'left-1'}`}></div>
-                </div>
+                <button 
+                  onClick={() => handleToggleSetting('email_alerts')} 
+                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors focus:outline-none ${settings.email_alerts ? 'bg-blue-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${settings.email_alerts ? 'left-6' : 'left-1'}`}></div>
+                </button>
               </div>
-              <div className={`flex items-center justify-between p-3 rounded-xl ${settings.dark_mode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+
+              <div className={`flex items-center justify-between p-3.5 rounded-xl border ${settings.dark_mode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-gray-50 border-gray-100'}`}>
                 <div>
-                  <p className="font-medium text-sm">Auto-Polling</p>
-                  <p className={`text-xs ${settings.dark_mode ? 'text-gray-400' : 'text-gray-500'}`}>Auto-refresh lead statuses during campaigns</p>
+                  <p className="font-semibold text-sm">Auto-Polling</p>
+                  <p className={`text-xs mt-0.5 ${settings.dark_mode ? 'text-gray-400' : 'text-gray-500'}`}>Real-time WebSocket & status synchronization</p>
                 </div>
-                <div onClick={() => handleToggleSetting('auto_polling')} className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${settings.auto_polling ? 'bg-indigo-500' : 'bg-gray-300'}`}>
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.auto_polling ? 'left-5' : 'left-1'}`}></div>
-                </div>
+                <button 
+                  onClick={() => handleToggleSetting('auto_polling')} 
+                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors focus:outline-none ${settings.auto_polling ? 'bg-blue-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${settings.auto_polling ? 'left-6' : 'left-1'}`}></div>
+                </button>
               </div>
-              <div className={`flex items-center justify-between p-3 rounded-xl ${settings.dark_mode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+
+              <div className={`flex items-center justify-between p-3.5 rounded-xl border ${settings.dark_mode ? 'bg-gray-800/60 border-gray-700/60' : 'bg-gray-50 border-gray-100'}`}>
                 <div>
-                  <p className="font-medium text-sm">Dark Mode</p>
-                  <p className={`text-xs ${settings.dark_mode ? 'text-gray-400' : 'text-gray-500'}`}>Toggle application theme</p>
+                  <p className="font-semibold text-sm">Dark Theme</p>
+                  <p className={`text-xs mt-0.5 ${settings.dark_mode ? 'text-gray-400' : 'text-gray-500'}`}>Toggle interface contrast</p>
                 </div>
-                <div onClick={() => handleToggleSetting('dark_mode')} className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${settings.dark_mode ? 'bg-indigo-500' : 'bg-gray-300'}`}>
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${settings.dark_mode ? 'left-5' : 'left-1'}`}></div>
-                </div>
+                <button 
+                  onClick={() => handleToggleSetting('dark_mode')} 
+                  className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors focus:outline-none ${settings.dark_mode ? 'bg-blue-600' : 'bg-gray-300'}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${settings.dark_mode ? 'left-6' : 'left-1'}`}></div>
+                </button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Top Navigation */}
-      <header className={`glass-header sticky top-0 z-20 ${settings.dark_mode ? 'bg-gray-800/80 border-b border-gray-700' : ''}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setActiveTab('campaigns')}>
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-teal-500 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-all">
-              <Mic className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-teal-600 tracking-tight">
-                Vocalize AI
-              </h1>
-              <p className="text-[10px] uppercase font-bold text-gray-500 tracking-widest leading-none">Orchestrator</p>
+      {/* Top Header */}
+      <header className={`glass-header sticky top-0 z-30 shrink-0 ${settings.dark_mode ? 'bg-gray-900/90 border-b border-gray-800' : ''}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          
+          {/* Logo & Mobile Menu Toggle */}
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 -ml-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 lg:hidden transition-colors"
+              aria-label="Toggle navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <div 
+              className="flex items-center gap-2.5 cursor-pointer group" 
+              onClick={() => setActiveTab('campaigns')}
+            >
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 via-blue-500 to-teal-400 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-all">
+                <Mic className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-teal-600 tracking-tight leading-none">
+                  Vocalize AI
+                </h1>
+                <p className="text-[9px] sm:text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-none mt-1">Orchestrator</p>
+              </div>
             </div>
           </div>
 
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
+          {/* Center Search Bar */}
+          <div className="hidden md:flex flex-1 max-w-md mx-4">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
                 value={searchQuery}
                 onChange={handleSearch}
-                placeholder="Search leads, campaigns..." 
-                className={`w-full pl-10 pr-4 py-2 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${settings.dark_mode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100/50 border border-gray-200/50 text-gray-900 bg-white focus:bg-white'}`}
+                placeholder="Search leads, phone, transcripts..." 
+                className={`w-full pl-10 pr-10 py-2 rounded-full text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
+                  settings.dark_mode 
+                    ? 'bg-gray-800 border-gray-700 text-white' 
+                    : 'bg-white/90 border border-gray-200/80 text-gray-900 shadow-sm'
+                }`}
               />
               {isSearching && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                  <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Notifications Dropdown */}
+          {/* Right Action Icons */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {/* Notification Bell */}
             <div className="relative" ref={notifRef}>
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className={`relative p-2 rounded-full transition-colors ${showNotifications ? 'bg-blue-100 text-blue-600' : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'}`}
+                className={`relative p-2 rounded-xl transition-all ${
+                  showNotifications 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50/80'
+                }`}
+                aria-label="Notifications"
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 min-w-[20px] h-[20px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center border-2 border-white translate-x-1/4 -translate-y-1/4 box-content">
+                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-rose-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </button>
               
               {showNotifications && (
-                <div className={`absolute right-0 mt-2 w-80 rounded-2xl shadow-xl border overflow-hidden z-50 animate-fade-in ${settings.dark_mode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                  <div className={`p-4 border-b flex justify-between items-center ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-100'}`}>
-                    <h3 className="font-semibold text-sm">Notifications</h3>
+                <div className={`absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 rounded-2xl shadow-2xl border overflow-hidden z-50 animate-fade-in ${
+                  settings.dark_mode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
+                }`}>
+                  <div className={`p-4 border-b flex justify-between items-center ${
+                    settings.dark_mode ? 'bg-gray-800/70 border-gray-700' : 'bg-gray-50/80 border-gray-100'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-blue-600" />
+                      <h3 className="font-bold text-sm">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.5 rounded-full">
+                          {unreadCount} new
+                        </span>
+                      )}
+                    </div>
                     {unreadCount > 0 && (
-                      <button onClick={handleMarkAllRead} className="text-xs text-blue-500 hover:underline">
-                        Mark all as read
+                      <button onClick={handleMarkAllRead} className="text-xs text-blue-600 font-semibold hover:underline">
+                        Mark all read
                       </button>
                     )}
                   </div>
-                  <div className="max-h-80 overflow-y-auto">
+                  <div className="max-h-80 overflow-y-auto custom-scrollbar divide-y divide-gray-100">
                     {notifications.length === 0 ? (
-                      <div className="p-12 text-center">
-                        <p className="text-sm text-gray-500">No new notifications</p>
+                      <div className="p-8 text-center">
+                        <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-xs text-gray-500">No new notifications</p>
                       </div>
                     ) : (
                       notifications.map((notif) => (
                         <div 
                           key={notif._id} 
-                          className={`p-4 border-b relative cursor-default ${settings.dark_mode ? 'border-gray-700' : 'border-gray-50'} ${!notif.is_read ? (settings.dark_mode ? 'bg-gray-700/50' : 'bg-blue-50/30') : ''}`}
+                          className={`p-3.5 transition-colors ${
+                            !notif.is_read 
+                              ? (settings.dark_mode ? 'bg-blue-950/30' : 'bg-blue-50/40') 
+                              : ''
+                          }`}
                         >
                           <div className="flex justify-between items-start gap-2">
-                            <div>
-                              <p className={`text-sm font-medium ${
-                                notif.type === 'error' ? 'text-red-600' : 
-                                notif.type === 'warning' ? 'text-orange-600' : 
-                                notif.type === 'success' ? 'text-green-600' : ''
+                            <div className="flex-1">
+                              <p className={`text-xs font-semibold ${
+                                notif.type === 'error' ? 'text-rose-600' : 
+                                notif.type === 'warning' ? 'text-amber-600' : 
+                                notif.type === 'success' ? 'text-emerald-600' : 'text-blue-600'
                               }`}>{notif.title}</p>
-                              <p className={`text-xs mt-1 ${settings.dark_mode ? 'text-gray-300' : 'text-gray-500'}`}>{notif.message}</p>
-                              <p className="text-[10px] text-blue-500 mt-2">{new Date(notif.created_at).toLocaleString()}</p>
+                              <p className={`text-xs mt-0.5 line-clamp-2 ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                {notif.message}
+                              </p>
+                              <p className="text-[10px] text-gray-400 mt-1">
+                                {new Date(notif.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                              </p>
                             </div>
                             {!notif.is_read && (
                               <button 
                                 onClick={(e) => handleMarkRead(notif._id, e)}
-                                className="p-1 text-gray-400 hover:text-blue-600 rounded-full hover:bg-gray-100"
-                                title="Mark as read"
+                                className="p-1 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-gray-100 transition-colors"
+                                title="Mark read"
                               >
-                                <Check className="w-3 h-3" />
+                                <Check className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
@@ -410,39 +476,49 @@ function App() {
             {/* Settings Button */}
             <button 
               onClick={() => setShowSettings(true)}
-              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition-colors"
+              aria-label="Settings"
             >
               <Settings className="w-5 h-5" />
             </button>
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileRef}>
-              <div 
+              <button 
                 onClick={() => setShowProfile(!showProfile)}
-                className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-100 to-teal-100 flex items-center justify-center border-2 border-white shadow-sm ml-2 cursor-pointer hover:shadow-md transition-shadow"
+                className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-100 via-teal-100 to-emerald-100 flex items-center justify-center border border-white shadow-sm ml-1 hover:shadow transition-all focus:outline-none"
+                aria-label="User Profile"
               >
-                <span className="text-blue-800 font-semibold text-sm">{getInitials(user.full_name)}</span>
-              </div>
+                <span className="text-blue-800 font-bold text-xs">{getInitials(user.full_name)}</span>
+              </button>
 
               {showProfile && (
-                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl border py-2 z-50 animate-fade-in ${settings.dark_mode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                  <div className={`px-4 py-3 border-b mb-2 ${settings.dark_mode ? 'bg-gray-700/50 border-gray-700' : 'bg-gray-50/50 border-gray-100'}`}>
-                    <p className="text-sm font-semibold truncate">{user.full_name}</p>
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded-md">
-                      {user.role}
+                <div className={`absolute right-0 mt-2 w-56 rounded-2xl shadow-2xl border py-2 z-50 animate-fade-in ${
+                  settings.dark_mode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
+                }`}>
+                  <div className={`px-4 py-3 border-b mb-1 ${settings.dark_mode ? 'bg-gray-800/40 border-gray-800' : 'bg-gray-50/60 border-gray-100'}`}>
+                    <p className="text-xs font-bold truncate text-gray-900">{user.full_name}</p>
+                    <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
+                    <span className="inline-block mt-1.5 px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold uppercase rounded-md border border-blue-100">
+                      {user.role || 'Admin'}
                     </span>
                   </div>
-                  <button onClick={() => { setShowProfileModal(true); setShowProfile(false); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                    <User className="w-4 h-4" /> My Profile
+                  <button 
+                    onClick={() => { setShowProfileModal(true); setShowProfile(false); }} 
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-blue-600" /> My Profile
                   </button>
-                  <button onClick={() => { setShowBillingModal(true); setShowProfile(false); }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                    <CreditCard className="w-4 h-4" /> Billing
+                  <button 
+                    onClick={() => { setShowBillingModal(true); setShowProfile(false); }} 
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4 text-indigo-600" /> Billing
                   </button>
-                  <div className={`border-t mt-2 pt-2 ${settings.dark_mode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <div className={`border-t my-1 pt-1 ${settings.dark_mode ? 'border-gray-800' : 'border-gray-100'}`}>
                     <button 
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
                     >
                       <LogOut className="w-4 h-4" /> Sign Out
                     </button>
@@ -453,151 +529,237 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Slide-Out Drawer Navigation */}
+      {showMobileMenu && (
+        <div className="fixed inset-0 z-50 flex lg:hidden animate-fade-in">
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowMobileMenu(false)} />
+          <div className="relative w-72 max-w-[80vw] bg-white h-full shadow-2xl p-5 flex flex-col z-10">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
+                  <Mic className="w-4 h-4" />
+                </div>
+                <span className="font-bold text-gray-900 text-sm">Vocalize AI</span>
+              </div>
+              <button onClick={() => setShowMobileMenu(false)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Nav Links */}
+            <nav className="mt-5 space-y-1.5 flex-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setShowMobileMenu(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Mobile System Status */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-br from-blue-50/70 to-teal-50/70 border border-blue-100/80 mb-4">
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-blue-500" />
+                System Status
+              </p>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 text-[11px] text-gray-600">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>All services active</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-gray-600">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>LangGraph Engine: Ready</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-gray-600">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>Vapi Voice: Connected</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Sign out */}
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-semibold text-rose-600 bg-rose-50/70 border border-rose-100 rounded-xl"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Sign Out
+            </button>
+          </div>
+        </div>
+      )}
       
-      {/* Main Layout Area */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex gap-8 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="hidden lg:block w-64 space-y-1 flex-shrink-0">
-          <nav className="space-y-2">
-            <button 
-              onClick={() => setActiveTab('campaigns')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium border ${
-                activeTab === 'campaigns' 
-                  ? (settings.dark_mode ? 'bg-gray-800 text-blue-400 border-gray-700' : 'bg-white text-blue-700 shadow-sm border-blue-100')
-                  : (settings.dark_mode ? 'text-gray-400 hover:bg-gray-800 border-transparent hover:text-gray-200' : 'text-gray-600 hover:bg-white/60 border-transparent hover:text-gray-900')
-              }`}
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              Campaigns
-            </button>
-            <button 
-              onClick={() => setActiveTab('agents')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium border ${
-                activeTab === 'agents' 
-                  ? (settings.dark_mode ? 'bg-gray-800 text-indigo-400 border-gray-700' : 'bg-white text-indigo-700 shadow-sm border-indigo-100')
-                  : (settings.dark_mode ? 'text-gray-400 hover:bg-gray-800 border-transparent hover:text-gray-200' : 'text-gray-600 hover:bg-white/60 border-transparent hover:text-gray-900')
-              }`}
-            >
-              <Mic className="w-5 h-5" />
-              Agents Configuration
-            </button>
-            <button 
-              onClick={() => setActiveTab('logs')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium border ${
-                activeTab === 'logs' 
-                  ? (settings.dark_mode ? 'bg-gray-800 text-orange-400 border-gray-700' : 'bg-white text-orange-700 shadow-sm border-orange-100')
-                  : (settings.dark_mode ? 'text-gray-400 hover:bg-gray-800 border-transparent hover:text-gray-200' : 'text-gray-600 hover:bg-white/60 border-transparent hover:text-gray-900')
-              }`}
-            >
-              <ScrollText className="w-5 h-5" />
-              Call Logs
-            </button>
+      {/* Main Workspace Layout */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex gap-6 overflow-hidden">
+        
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:flex w-64 flex-col justify-between shrink-0">
+          <nav className="space-y-1.5">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button 
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-semibold border ${
+                    isActive 
+                      ? (settings.dark_mode ? 'bg-gray-800 text-blue-400 border-gray-700' : item.activeClass)
+                      : (settings.dark_mode ? 'text-gray-400 hover:bg-gray-800 border-transparent' : 'text-gray-600 hover:bg-white/60 border-transparent hover:text-gray-900')
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? item.color : 'text-gray-400'}`} />
+                  {item.label}
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Sidebar Info Card */}
-          <div className={`mt-8 p-4 rounded-xl border ${settings.dark_mode ? 'bg-gray-800 border-gray-700' : 'bg-gradient-to-br from-blue-50 to-teal-50 border-blue-100'}`}>
-            <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">System Status</p>
-            <div className="flex items-center gap-2 mt-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <p className={`text-xs ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>All services operational</p>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              <p className={`text-xs ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>LangGraph Agent: Active</p>
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-              <p className={`text-xs ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Vapi Voice: Connected</p>
+          {/* Sidebar System Status Card */}
+          <div className={`p-4 rounded-2xl border ${
+            settings.dark_mode ? 'bg-gray-900 border-gray-800' : 'bg-gradient-to-br from-blue-50/80 via-white to-teal-50/80 border-blue-100/70 shadow-sm'
+          }`}>
+            <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" />
+              System Status
+            </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-400"></div>
+                <p className="text-xs font-medium text-gray-700">All services operational</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-sm shadow-emerald-400"></div>
+                <p className="text-xs font-medium text-gray-700">LangGraph Agent: Active</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-sm shadow-emerald-400"></div>
+                <p className="text-xs font-medium text-gray-700">Vapi Voice: Connected</p>
+              </div>
             </div>
           </div>
         </aside>
 
-        {/* Content */}
+        {/* Content Pane */}
         <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {renderContent()}
         </main>
       </div>
 
+      {/* Mobile Bottom Navigation Dock (Visible only on mobile/tablet < 1024px) */}
+      <nav className="lg:hidden shrink-0 bg-white/95 backdrop-blur-lg border-t border-gray-200/80 px-2 py-1.5 flex items-center justify-around z-20 shadow-lg">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                isActive 
+                  ? 'text-blue-600 font-bold' 
+                  : 'text-gray-400 font-medium hover:text-gray-600'
+              }`}
+            >
+              <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+              <span className="text-[10px] mt-0.5">{item.label.split(' ')[0]}</span>
+            </button>
+          );
+        })}
+      </nav>
+
       {/* Profile Modal */}
       {showProfileModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowProfileModal(false)}>
-          <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative ${settings.dark_mode ? 'bg-gray-800 text-white' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowProfileModal(false)} className={`absolute top-4 right-4 ${settings.dark_mode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowProfileModal(false)}>
+          <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative border ${settings.dark_mode ? 'bg-gray-900 text-white border-gray-800' : 'bg-white border-gray-100'}`} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowProfileModal(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><User className="w-6 h-6 text-blue-500" /> My Profile</h2>
-            <div className="space-y-4">
+            <h2 className="text-lg font-bold mb-5 flex items-center gap-2">
+              <User className="w-5 h-5 text-blue-600" /> My Profile
+            </h2>
+            <div className="space-y-3.5">
               <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Full Name</label>
-                <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.full_name}</div>
+                <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Full Name</label>
+                <div className="p-3 rounded-xl border border-gray-200/80 bg-gray-50 text-sm font-medium text-gray-800">{user?.full_name}</div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Email Address</label>
-                <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.email}</div>
+                <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Email Address</label>
+                <div className="p-3 rounded-xl border border-gray-200/80 bg-gray-50 text-sm font-medium text-gray-800">{user?.email}</div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Role</label>
-                <div className={`p-3 rounded-lg border ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>{user?.role}</div>
+                <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Account Role</label>
+                <div className="p-3 rounded-xl border border-gray-200/80 bg-gray-50 text-sm font-medium text-gray-800 uppercase">{user?.role || 'Admin'}</div>
               </div>
 
               {!isChangingPassword ? (
                 <button
                   onClick={() => setIsChangingPassword(true)}
-                  className={`mt-4 w-full py-2 px-4 border rounded-lg text-sm font-medium transition-colors ${settings.dark_mode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                  className="mt-3 w-full py-2.5 px-4 border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-xs font-semibold transition-colors shadow-sm"
                 >
                   Change Password
                 </button>
               ) : (
-                <form onSubmit={handleUpdatePassword} className="mt-6 pt-6 border-t border-gray-100 space-y-4">
-                  <h3 className="text-sm font-bold">Update Password</h3>
+                <form onSubmit={handleUpdatePassword} className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                  <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Update Password</h3>
                   
-                  {passwordError && <div className="p-2 bg-red-50 text-red-600 text-xs rounded border border-red-100">{passwordError}</div>}
-                  {passwordSuccess && <div className="p-2 bg-green-50 text-green-600 text-xs rounded border border-green-100">{passwordSuccess}</div>}
+                  {passwordError && <div className="p-2.5 bg-rose-50 text-rose-700 text-xs rounded-xl border border-rose-100 font-medium">{passwordError}</div>}
+                  {passwordSuccess && <div className="p-2.5 bg-emerald-50 text-emerald-700 text-xs rounded-xl border border-emerald-100 font-medium">{passwordSuccess}</div>}
 
-                  <div>
-                    <input 
-                      type="password" 
-                      placeholder="Current Password" 
-                      required
-                      value={oldPassword}
-                      onChange={e => setOldPassword(e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                    />
-                  </div>
-                  <div>
-                    <input 
-                      type="password" 
-                      placeholder="New Password" 
-                      required
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                    />
-                  </div>
-                  <div>
-                    <input 
-                      type="password" 
-                      placeholder="Confirm New Password" 
-                      required
-                      value={confirmPassword}
-                      onChange={e => setConfirmPassword(e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-2">
+                  <input 
+                    type="password" 
+                    placeholder="Current Password" 
+                    required
+                    value={oldPassword}
+                    onChange={e => setOldPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50"
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="New Password (min 6 characters)" 
+                    required
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50"
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Confirm New Password" 
+                    required
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-gray-50"
+                  />
+                  <div className="flex gap-2 pt-1">
                     <button 
                       type="button" 
                       onClick={() => setIsChangingPassword(false)}
-                      className="flex-1 py-2 px-4 border rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                      className="flex-1 py-2 px-3 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
                     >
                       Cancel
                     </button>
                     <button 
                       type="submit" 
                       disabled={isUpdatingPassword}
-                      className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-70"
+                      className="flex-1 py-2 px-3 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 disabled:opacity-70 shadow-sm"
                     >
-                      {isUpdatingPassword ? 'Saving...' : 'Save'}
+                      {isUpdatingPassword ? 'Saving...' : 'Save Password'}
                     </button>
                   </div>
                 </form>
@@ -609,28 +771,30 @@ function App() {
 
       {/* Billing Modal */}
       {showBillingModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowBillingModal(false)}>
-          <div className={`w-full max-w-md p-6 rounded-2xl shadow-2xl relative ${settings.dark_mode ? 'bg-gray-800 text-white' : 'bg-white'}`} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setShowBillingModal(false)} className={`absolute top-4 right-4 ${settings.dark_mode ? 'text-gray-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setShowBillingModal(false)}>
+          <div className="w-full max-w-md p-6 rounded-2xl shadow-2xl relative border border-gray-100 bg-white" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setShowBillingModal(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><CreditCard className="w-6 h-6 text-indigo-500" /> Billing Details</h2>
-            <div className={`p-4 rounded-xl border mb-6 ${settings.dark_mode ? 'bg-gray-700 border-gray-600' : 'bg-indigo-50 border-indigo-100'}`}>
-              <p className="text-sm font-medium mb-1">Current Plan: <span className="font-bold text-indigo-600">Enterprise Voice AI</span></p>
-              <p className={`text-xs ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Active subscription. Renews on 1st of next month.</p>
+            <h2 className="text-lg font-bold mb-5 flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-indigo-600" /> Plan & Usage
+            </h2>
+            <div className="p-4 rounded-xl border border-indigo-100 bg-indigo-50/50 mb-5">
+              <p className="text-xs font-semibold text-indigo-800">Enterprise Voice AI Tier</p>
+              <p className="text-xs text-gray-500 mt-0.5">Multi-tenant automated orchestration enabled</p>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className={`text-sm ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Vapi Minutes Used</span>
-                <span className="font-semibold">342 / 10,000</span>
+            <div className="space-y-3 divide-y divide-gray-100 text-xs">
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-gray-600">Vapi Minutes Allocated</span>
+                <span className="font-bold text-gray-900">10,000 / mo</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                <span className={`text-sm ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>LangGraph Triggers</span>
-                <span className="font-semibold">342 / Unlimited</span>
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-gray-600">LangGraph AI Triggers</span>
+                <span className="font-bold text-emerald-600">Unlimited</span>
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className={`text-sm ${settings.dark_mode ? 'text-gray-300' : 'text-gray-600'}`}>Current Balance</span>
-                <span className="font-bold text-green-600">$45.00</span>
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-gray-600">Active Tenants</span>
+                <span className="font-bold text-gray-900">Multi-tenant</span>
               </div>
             </div>
           </div>
