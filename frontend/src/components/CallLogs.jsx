@@ -3,7 +3,7 @@ import { getCompanies, getCallLogs } from '../api';
 import { 
   ScrollText, AlertCircle, Clock, ChevronDown, ChevronUp, User, 
   Building2, MessageSquareText, Search, Filter, Sparkles, Copy, 
-  Check, RefreshCw, Phone, BarChart2
+  Check, RefreshCw, Phone, BarChart2, Loader2
 } from 'lucide-react';
 
 const CallLogs = () => {
