@@ -97,7 +97,7 @@ const AgentsConfig = () => {
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-indigo-500 to-purple-500" />
         
         <div className="pl-2.5 sm:pl-3">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight flex items-center gap-2">
             <Bot className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
             Voice Agents Configuration
           </h2>
@@ -141,7 +141,7 @@ const AgentsConfig = () => {
           {/* Prompt Editor Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 flex items-center gap-2">
                 <Code2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                 {selectedCompany?.name || 'Agent'} — System Prompt
               </h3>
@@ -152,7 +152,7 @@ const AgentsConfig = () => {
 
             {/* Quick Templates Selector */}
             <div className="flex items-center gap-1.5 overflow-x-auto">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider shrink-0 mr-1">
                 Templates:
               </span>
               <button
@@ -198,7 +198,7 @@ const AgentsConfig = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+              className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all shadow-md active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -213,7 +213,7 @@ const AgentsConfig = () => {
           <div className="pt-6 border-t border-gray-200/80">
             <div className="flex items-center gap-2 mb-2">
               <Layers className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-base sm:text-lg font-bold text-gray-900">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900">
                 LangGraph Decision Engine
               </h3>
             </div>
@@ -228,7 +228,7 @@ const AgentsConfig = () => {
       {/* Success Toast */}
       {saveSuccess && (
         <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
-          <div className="flex items-center gap-2.5 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl shadow-emerald-600/20 text-xs sm:text-sm font-bold">
+          <div className="flex items-center gap-2.5 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl shadow-emerald-600/20 text-xs sm:text-sm font-semibold">
             <CheckCircle className="w-4 h-4 shrink-0" />
             <span>Agent instructions saved successfully!</span>
           </div>

@@ -54,7 +54,7 @@ const AuthForm = ({ onAuthSuccess }) => {
           <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4 transform -rotate-6 hover:rotate-0 transition-transform">
             <Mic className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight">
             {isResettingPassword ? 'Reset Password' : (isLogin ? 'Welcome Back' : 'Create Account')}
           </h1>
           <p className="text-gray-500 mt-2">
@@ -78,7 +78,7 @@ const AuthForm = ({ onAuthSuccess }) => {
               Password Reset Successful
             </div>
             <p className="text-sm">Your temporary password is:</p>
-            <div className="text-2xl font-mono font-bold tracking-widest bg-white px-4 py-2 rounded shadow-inner my-1 select-all">
+            <div className="text-xl sm:text-2xl font-mono font-semibold tracking-widest bg-white px-4 py-2 rounded shadow-inner my-1 select-all">
               {tempPassword}
             </div>
             <p className="text-xs text-green-700">Please copy this password, click "Log in", and change it immediately from your Profile.</p>

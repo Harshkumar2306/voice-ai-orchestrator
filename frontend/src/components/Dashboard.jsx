@@ -52,7 +52,7 @@ const StatusBadge = ({ status }) => {
   const Icon = config.icon;
 
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold border ${config.color} shadow-2xs whitespace-nowrap`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-medium border ${config.color} shadow-2xs whitespace-nowrap`}>
       <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
       {config.label}
     </span>
@@ -79,21 +79,21 @@ const AnimatedCounter = ({ value, label, icon: Icon, color, bgColor, isActive, o
   return (
     <button
       onClick={onClick}
-      className={`glass-panel rounded-2xl p-3 sm:p-4.5 flex items-center gap-3 sm:gap-4 group transition-all text-left w-full border relative overflow-hidden ${
+      className={`glass-panel rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-3.5 group transition-all text-left w-full border relative overflow-hidden ${
         isActive 
           ? 'ring-2 ring-blue-500/40 border-blue-300 bg-white/95 shadow-md -translate-y-0.5' 
           : 'border-white/70 hover:border-blue-200 hover:shadow-md hover:-translate-y-0.5'
       }`}
     >
-      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${bgColor} flex items-center justify-center ${color} shrink-0 group-hover:scale-105 transition-transform shadow-2xs`}>
-        <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+      <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-xl ${bgColor} flex items-center justify-center ${color} shrink-0 group-hover:scale-105 transition-transform shadow-2xs`}>
+        <Icon className="w-5 h-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight leading-tight">
+        <p className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight leading-tight">
           {displayValue}
           {typeof value === 'string' && value.includes('%') ? '%' : ''}
         </p>
-        <p className="text-[11px] sm:text-xs text-gray-500 font-semibold truncate mt-0.5">
+        <p className="text-[11px] sm:text-xs text-gray-500 font-medium truncate mt-0.5">
           {label}
         </p>
       </div>
@@ -428,7 +428,7 @@ const Dashboard = ({ globalSearch = '' }) => {
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-blue-500 to-teal-400" />
         
         <div className="pl-2.5 sm:pl-3">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Campaign Overview</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight">Campaign Overview</h2>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 max-w-xl leading-relaxed">
             Automate outbound calls and qualify leads in real time.
           </p>
@@ -529,7 +529,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                   <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">Lead Directory</h3>
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-900 tracking-tight">Lead Directory</h3>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-[11px] font-semibold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-md">
                       {customers.length} Total
@@ -590,7 +590,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                 <button
                   onClick={handleTriggerCampaign}
                   disabled={triggering || pendingCount === 0}
-                  className={`flex-1 sm:flex-none relative overflow-hidden flex items-center justify-center gap-1.5 px-4 h-9 sm:h-10 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-sm group ${
+                  className={`flex-1 sm:flex-none relative overflow-hidden flex items-center justify-center gap-1.5 px-4 h-9 sm:h-10 rounded-xl font-semibold text-xs sm:text-sm transition-all shadow-sm group ${
                     triggering || pendingCount === 0
                       ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
                       : 'bg-gradient-to-r from-gray-900 to-slate-800 text-white hover:from-black hover:to-gray-900 border border-transparent hover:shadow active:scale-95'
@@ -625,7 +625,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                   }`}
                 >
                   <span>{tab.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
                     isActive ? 'bg-white/25 text-white' : 'bg-gray-200/80 text-gray-600'
                   }`}>
                     {tab.count}
@@ -649,7 +649,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mx-auto mb-3">
                   <Filter className="w-6 h-6" />
                 </div>
-                <h4 className="text-sm font-bold text-gray-800">No matching leads found</h4>
+                <h4 className="text-sm font-semibold text-gray-800">No matching leads found</h4>
                 <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
                   {activeSearch || statusFilter !== 'ALL'
                     ? "Try adjusting your search query or status filter to view more results."
@@ -658,7 +658,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                 {(activeSearch || statusFilter !== 'ALL') && (
                   <button 
                     onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); }}
-                    className="mt-3 text-xs font-bold text-blue-600 hover:underline"
+                    className="mt-3 text-xs font-semibold text-blue-600 hover:underline"
                   >
                     Clear active filters
                   </button>
@@ -670,11 +670,11 @@ const Dashboard = ({ globalSearch = '' }) => {
                 <table className="hidden sm:table min-w-full divide-y divide-gray-100">
                   <thead className="bg-gray-50/80 sticky top-0 z-10 backdrop-blur-sm shadow-2xs">
                     <tr>
-                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer Name</th>
-                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Contact Details</th>
-                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Added On</th>
-                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Current Status</th>
-                      <th scope="col" className="px-4 py-3 text-right text-[11px] font-bold text-gray-400 uppercase tracking-wider">Actions</th>
+                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Customer Name</th>
+                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Contact Details</th>
+                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Added On</th>
+                      <th scope="col" className="px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Current Status</th>
+                      <th scope="col" className="px-4 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white/60 divide-y divide-gray-100/80">
@@ -686,11 +686,11 @@ const Dashboard = ({ globalSearch = '' }) => {
                       >
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-100 to-teal-100 border border-white flex items-center justify-center text-blue-700 font-bold text-xs uppercase shadow-2xs shrink-0">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-100 to-teal-100 border border-white flex items-center justify-center text-blue-700 font-semibold text-xs uppercase shadow-2xs shrink-0">
                               {customer.name.charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <span className="text-xs sm:text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors block truncate">
+                              <span className="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors block truncate">
                                 {customer.name}
                               </span>
                               {customer.email && (
@@ -765,11 +765,11 @@ const Dashboard = ({ globalSearch = '' }) => {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-100 to-teal-100 border border-white flex items-center justify-center text-blue-700 font-bold text-xs uppercase shadow-2xs shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-100 to-teal-100 border border-white flex items-center justify-center text-blue-700 font-semibold text-xs uppercase shadow-2xs shrink-0">
                             {customer.name.charAt(0)}
                           </div>
                           <div>
-                            <p className="font-bold text-sm text-gray-900 leading-tight">{customer.name}</p>
+                            <p className="font-semibold text-sm text-gray-900 leading-tight">{customer.name}</p>
                             <p className="text-xs text-gray-500 font-mono mt-0.5">{customer.phone_number}</p>
                           </div>
                         </div>
@@ -792,12 +792,12 @@ const Dashboard = ({ globalSearch = '' }) => {
                           {customer.status === 'PENDING' && (
                             <button
                               onClick={() => handleWebCall(customer)}
-                              className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-bold text-xs flex items-center gap-1 border border-indigo-100"
+                              className="px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg font-semibold text-xs flex items-center gap-1 border border-indigo-100"
                             >
                               <Mic className="w-3 h-3" /> Call
                             </button>
                           )}
-                          <span className="text-blue-600 font-bold flex items-center gap-0.5">
+                          <span className="text-blue-600 font-semibold flex items-center gap-0.5">
                             View <ChevronRight className="w-3 h-3" />
                           </span>
                         </div>
@@ -830,11 +830,11 @@ const Dashboard = ({ globalSearch = '' }) => {
             
             {/* Modal Header */}
             <div className="flex items-center gap-3.5 mb-4 shrink-0">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-100 via-teal-100 to-indigo-100 border-2 border-white shadow-md flex items-center justify-center text-blue-700 font-extrabold text-xl uppercase shrink-0">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-100 via-teal-100 to-indigo-100 border-2 border-white shadow-md flex items-center justify-center text-blue-700 font-semibold text-base uppercase shrink-0">
                 {selectedLead.name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{selectedLead.name}</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{selectedLead.name}</h3>
                 <p className="text-xs sm:text-sm text-gray-600 font-medium font-mono flex items-center gap-1.5 mt-0.5 truncate">
                   <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" /> {selectedLead.phone_number}
                 </p>
@@ -860,7 +860,7 @@ const Dashboard = ({ globalSearch = '' }) => {
 
               <div className="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl border border-gray-100">
                 <span className="text-xs text-gray-500 font-semibold">Tenant Space</span>
-                <span className="text-xs font-bold text-gray-900">{selectedCompany?.name || 'Dream Homes Realty'}</span>
+                <span className="text-xs font-semibold text-gray-900">{selectedCompany?.name || 'Dream Homes Realty'}</span>
               </div>
 
               {selectedLead.created_at && (
@@ -876,11 +876,11 @@ const Dashboard = ({ globalSearch = '' }) => {
               {(selectedLead.confidence_score !== undefined || selectedLead.sentiment) && (
                 <div className="p-3.5 sm:p-4 bg-gradient-to-br from-indigo-50/70 to-blue-50/70 border border-indigo-100 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase font-bold text-indigo-700 flex items-center gap-1.5 tracking-wider">
+                    <span className="text-xs uppercase font-semibold text-indigo-700 flex items-center gap-1.5 tracking-wider">
                       <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> LangGraph AI Insights
                     </span>
                     {selectedLead.sentiment && (
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
                         selectedLead.sentiment === 'POSITIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         selectedLead.sentiment === 'NEGATIVE' ? 'bg-rose-50 text-rose-700 border-rose-200' :
                         'bg-gray-50 text-gray-700 border-gray-200'
@@ -894,7 +894,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                     <div>
                       <div className="flex justify-between text-xs text-gray-600 font-semibold mb-1">
                         <span>Evaluation Confidence</span>
-                        <span className="font-bold text-gray-900">{(selectedLead.confidence_score * 100).toFixed(0)}%</span>
+                        <span className="font-semibold text-gray-900">{(selectedLead.confidence_score * 100).toFixed(0)}%</span>
                       </div>
                       <div className="w-full h-2.5 bg-gray-200/80 rounded-full overflow-hidden">
                         <div 
@@ -919,14 +919,14 @@ const Dashboard = ({ globalSearch = '' }) => {
 
             {/* Human-in-the-Loop Resolution Action Buttons */}
             <div className="mt-4 pt-3.5 border-t border-gray-100 shrink-0">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
                 Human-in-the-loop actions
               </p>
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <button
                   onClick={() => handleStatusChange('QUALIFIED')}
                   disabled={updatingStatus || selectedLead.status === 'QUALIFIED'}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
                   Mark Qualified
@@ -934,7 +934,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                 <button
                   onClick={() => handleStatusChange('NOT_INTERESTED')}
                   disabled={updatingStatus || selectedLead.status === 'NOT_INTERESTED'}
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                 >
                   <ThumbsDown className="w-3.5 h-3.5" />
                   Not Interested
@@ -974,7 +974,7 @@ const Dashboard = ({ globalSearch = '' }) => {
             <button onClick={() => setShowAddLeadModal(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
               <XCircle className="w-5 h-5" />
             </button>
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">Add Custom Lead</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Add Custom Lead</h3>
             <p className="text-xs sm:text-sm text-gray-500 mb-5 leading-relaxed">
               Add a customer to test AI outbound qualification with any phone number.
             </p>
@@ -1023,7 +1023,7 @@ const Dashboard = ({ globalSearch = '' }) => {
                 <button
                   type="submit"
                   disabled={addingLead}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-70"
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-70"
                 >
                   {addingLead ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   <span>{addingLead ? 'Adding Lead...' : 'Add Lead to Campaign'}</span>

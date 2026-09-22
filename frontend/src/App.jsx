@@ -215,11 +215,11 @@ function App() {
         </div>
         <div className="flex items-center gap-2.5 mb-2">
           <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
-          <h2 className="text-lg font-bold text-gray-900 tracking-tight">Connecting to Vocalize AI</h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 tracking-tight">Connecting to Vocalize AI</h2>
         </div>
         {isColdStarting ? (
           <div className="mt-4 max-w-sm px-5 py-4 bg-white/90 backdrop-blur-md border border-blue-200/70 rounded-2xl text-blue-900 text-xs shadow-lg shadow-blue-500/5 animate-fade-in space-y-1.5">
-            <p className="font-bold flex items-center justify-center gap-1.5 text-blue-700">
+            <p className="font-semibold flex items-center justify-center gap-1.5 text-blue-700">
               <span>⚡</span> Cloud Server Waking Up
             </p>
             <p className="text-gray-600 leading-relaxed">
@@ -280,7 +280,7 @@ function App() {
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Settings className="w-5 h-5 text-blue-600" />
               Global Settings
             </h2>
@@ -351,10 +351,10 @@ function App() {
                 <Mic className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-base sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-teal-600 tracking-tight leading-none">
+                <h1 className="text-base sm:text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-600 to-teal-600 tracking-tight leading-none">
                   Vocalize AI
                 </h1>
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold text-gray-400 tracking-widest leading-none mt-1">Orchestrator</p>
+                <p className="text-[9px] sm:text-[10px] uppercase font-semibold text-gray-400 tracking-widest leading-none mt-1">Orchestrator</p>
               </div>
             </div>
           </div>
@@ -397,7 +397,7 @@ function App() {
               >
                 <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-rose-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-semibold bg-rose-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -412,9 +412,9 @@ function App() {
                   }`}>
                     <div className="flex items-center gap-2">
                       <Bell className="w-4 h-4 text-blue-600" />
-                      <h3 className="font-bold text-sm">Notifications</h3>
+                      <h3 className="font-semibold text-sm">Notifications</h3>
                       {unreadCount > 0 && (
-                        <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.5 rounded-full">
+                        <span className="text-[10px] bg-blue-100 text-blue-700 font-semibold px-1.5 py-0.5 rounded-full">
                           {unreadCount} new
                         </span>
                       )}
@@ -489,7 +489,7 @@ function App() {
                 className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-100 via-teal-100 to-emerald-100 flex items-center justify-center border border-white shadow-sm ml-1 hover:shadow transition-all focus:outline-none"
                 aria-label="User Profile"
               >
-                <span className="text-blue-800 font-bold text-xs">{getInitials(user.full_name)}</span>
+                <span className="text-blue-800 font-semibold text-xs">{getInitials(user.full_name)}</span>
               </button>
 
               {showProfile && (
@@ -497,9 +497,9 @@ function App() {
                   settings.dark_mode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
                 }`}>
                   <div className={`px-4 py-3 border-b mb-1 ${settings.dark_mode ? 'bg-gray-800/40 border-gray-800' : 'bg-gray-50/60 border-gray-100'}`}>
-                    <p className="text-xs font-bold truncate text-gray-900">{user.full_name}</p>
+                    <p className="text-xs font-semibold truncate text-gray-900">{user.full_name}</p>
                     <p className="text-[11px] text-gray-500 truncate">{user.email}</p>
-                    <span className="inline-block mt-1.5 px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold uppercase rounded-md border border-blue-100">
+                    <span className="inline-block mt-1.5 px-2 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-semibold uppercase rounded-md border border-blue-100">
                       {user.role || 'Admin'}
                     </span>
                   </div>
@@ -540,7 +540,7 @@ function App() {
                 <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
                   <Mic className="w-4 h-4" />
                 </div>
-                <span className="font-bold text-gray-900 text-sm">Vocalize AI</span>
+                <span className="font-semibold text-gray-900 text-sm">Vocalize AI</span>
               </div>
               <button onClick={() => setShowMobileMenu(false)} className="p-1 rounded-lg text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
@@ -627,7 +627,7 @@ function App() {
               onClick={() => setActiveTab(item.id)}
               className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
                 isActive 
-                  ? 'text-blue-600 font-bold' 
+                  ? 'text-blue-600 font-semibold' 
                   : 'text-gray-400 font-medium hover:text-gray-600'
               }`}
             >
@@ -645,7 +645,7 @@ function App() {
             <button onClick={() => setShowProfileModal(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-bold mb-5 flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-semibold mb-5 flex items-center gap-2">
               <User className="w-5 h-5 text-blue-600" /> My Profile
             </h2>
             <div className="space-y-3.5">
@@ -671,7 +671,7 @@ function App() {
                 </button>
               ) : (
                 <form onSubmit={handleUpdatePassword} className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-                  <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">Update Password</h3>
+                  <h3 className="text-xs font-semibold text-gray-800 uppercase tracking-wider">Update Password</h3>
                   
                   {passwordError && <div className="p-2.5 bg-rose-50 text-rose-700 text-xs rounded-xl border border-rose-100 font-medium">{passwordError}</div>}
                   {passwordSuccess && <div className="p-2.5 bg-emerald-50 text-emerald-700 text-xs rounded-xl border border-emerald-100 font-medium">{passwordSuccess}</div>}
@@ -730,7 +730,7 @@ function App() {
             <button onClick={() => setShowBillingModal(false)} className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100">
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-bold mb-5 flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-semibold mb-5 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-indigo-600" /> Plan & Usage
             </h2>
             <div className="p-4 rounded-xl border border-indigo-100 bg-indigo-50/50 mb-5">
@@ -740,15 +740,15 @@ function App() {
             <div className="space-y-3 divide-y divide-gray-100 text-xs">
               <div className="flex justify-between items-center pt-2">
                 <span className="text-gray-600">Vapi Minutes Allocated</span>
-                <span className="font-bold text-gray-900">10,000 / mo</span>
+                <span className="font-semibold text-gray-900">10,000 / mo</span>
               </div>
               <div className="flex justify-between items-center pt-2">
                 <span className="text-gray-600">LangGraph AI Triggers</span>
-                <span className="font-bold text-emerald-600">Unlimited</span>
+                <span className="font-semibold text-emerald-600">Unlimited</span>
               </div>
               <div className="flex justify-between items-center pt-2">
                 <span className="text-gray-600">Active Tenants</span>
-                <span className="font-bold text-gray-900">Multi-tenant</span>
+                <span className="font-semibold text-gray-900">Multi-tenant</span>
               </div>
             </div>
           </div>

@@ -144,7 +144,7 @@ const CallLogs = () => {
         <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-orange-500 to-amber-400" />
         
         <div className="pl-2.5 sm:pl-3">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight flex items-center gap-2">
             <ScrollText className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500" />
             Call Transcript Logs
           </h2>
@@ -211,7 +211,7 @@ const CallLogs = () => {
               <select
                 value={outcomeFilter}
                 onChange={(e) => setOutcomeFilter(e.target.value)}
-                className="w-full sm:w-auto h-9 sm:h-10 px-3 rounded-xl border border-gray-200/90 bg-white text-xs font-bold text-gray-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all cursor-pointer"
+                className="w-full sm:w-auto h-9 sm:h-10 px-3 rounded-xl border border-gray-200/90 bg-white text-xs font-semibold text-gray-700 shadow-2xs focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all cursor-pointer"
               >
                 <option value="ALL">All Outcomes</option>
                 <option value="QUALIFIED">Qualified</option>
@@ -221,24 +221,21 @@ const CallLogs = () => {
                 <option value="FAILED">Failed</option>
               </select>
             </div>
-            <span className="text-xs text-gray-500 font-semibold px-2.5 py-1.5 bg-gray-100/80 rounded-xl shrink-0">
-              {filteredLogs.length} {filteredLogs.length === 1 ? 'call' : 'calls'}
-            </span>
           </div>
         </div>
 
-        {/* List Content */}
+        {/* Logs List Container */}
         {loading ? (
-          <div className="p-8 sm:p-12 flex flex-col items-center justify-center">
-            <RefreshCw className="w-8 h-8 text-orange-500 animate-spin mb-3" />
-            <p className="text-xs sm:text-sm font-semibold text-gray-500">Loading call history...</p>
+          <div className="p-8 sm:p-14 flex flex-col items-center justify-center flex-1">
+            <Loader2 className="w-8 h-8 text-orange-500 animate-spin mb-3" />
+            <p className="text-xs sm:text-sm font-semibold text-gray-500">Loading call records...</p>
           </div>
         ) : callLogs.length === 0 ? (
           <div className="p-8 sm:p-14 text-center">
             <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 mx-auto mb-3 shadow-2xs">
               <MessageSquareText className="w-7 h-7" />
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">No Call Logs Yet</h3>
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1">No Call Logs Yet</h3>
             <p className="text-xs sm:text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
               When you launch an outbound campaign or initiate web calls, real-time transcripts and AI evaluations will stream here.
             </p>
@@ -248,7 +245,7 @@ const CallLogs = () => {
             <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 mx-auto mb-3">
               <Search className="w-6 h-6" />
             </div>
-            <h4 className="text-sm font-bold text-gray-700">No matching call logs</h4>
+            <h4 className="text-sm font-semibold text-gray-700">No matching call logs</h4>
             <p className="text-xs text-gray-400 mt-1">Try clearing your search query or filter selection.</p>
           </div>
         ) : (
@@ -260,11 +257,11 @@ const CallLogs = () => {
                   className="w-full p-3.5 sm:p-4.5 flex items-center justify-between hover:bg-orange-50/25 transition-all text-left"
                 >
                   <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 flex-1">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-orange-100 via-amber-100 to-rose-100 flex items-center justify-center text-orange-700 font-bold text-xs uppercase shadow-2xs shrink-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-orange-100 via-amber-100 to-rose-100 flex items-center justify-center text-orange-700 font-semibold text-xs uppercase shadow-2xs shrink-0">
                       {log.customer_name ? log.customer_name.charAt(0) : <User className="w-4 h-4" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
                         {log.customer_name || 'Prospect Call'}
                       </p>
                       <p className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5 font-mono truncate">
@@ -275,12 +272,12 @@ const CallLogs = () => {
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-2">
-                    <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold border ${getOutcomeBadge(log.outcome)}`}>
+                    <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium border ${getOutcomeBadge(log.outcome)}`}>
                       {log.outcome || 'PENDING'}
                     </span>
 
                     {log.confidence_score !== undefined && (
-                      <span className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-lg border hidden sm:inline-flex ${
+                      <span className={`text-[10px] sm:text-xs font-medium px-2 py-0.5 rounded-lg border hidden sm:inline-flex ${
                         log.confidence_score >= 0.8 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         log.confidence_score >= 0.6 ? 'bg-amber-50 text-amber-700 border-amber-200' :
                         'bg-rose-50 text-rose-700 border-rose-200'
@@ -309,10 +306,10 @@ const CallLogs = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {log.sentiment && (
                             <div className="bg-white rounded-xl p-3.5 border border-gray-100 shadow-2xs">
-                              <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
+                              <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">
                                 Call Sentiment
                               </p>
-                              <p className={`text-sm font-bold flex items-center gap-1.5 ${
+                              <p className={`text-sm font-semibold flex items-center gap-1.5 ${
                                 log.sentiment === 'POSITIVE' ? 'text-emerald-700' :
                                 log.sentiment === 'NEGATIVE' ? 'text-rose-700' : 'text-gray-700'
                               }`}>
@@ -325,10 +322,10 @@ const CallLogs = () => {
                           {log.confidence_score !== undefined && (
                             <div className="bg-white rounded-xl p-3.5 border border-gray-100 shadow-2xs">
                               <div className="flex justify-between items-center mb-1">
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">
                                   AI Confidence
                                 </p>
-                                <span className="text-xs font-bold text-gray-800">
+                                <span className="text-xs font-semibold text-gray-800">
                                   {(log.confidence_score * 100).toFixed(0)}%
                                 </span>
                               </div>
@@ -349,7 +346,7 @@ const CallLogs = () => {
                       {/* LangGraph AI Reasoning */}
                       {log.reasoning && (
                         <div className="bg-gradient-to-br from-indigo-50/70 to-blue-50/70 rounded-xl p-3.5 sm:p-4 border border-indigo-100/90 shadow-2xs">
-                          <p className="text-[11px] text-indigo-700 uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5">
+                          <p className="text-[11px] text-indigo-700 uppercase tracking-wider font-semibold mb-1 flex items-center gap-1.5">
                             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                             LangGraph AI Reasoning
                           </p>
@@ -362,7 +359,7 @@ const CallLogs = () => {
                       {/* Call Summary */}
                       {log.summary && (
                         <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-gray-100 shadow-2xs">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-1">
                             Call Summary
                           </p>
                           <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
@@ -375,7 +372,7 @@ const CallLogs = () => {
                       {log.transcript && (
                         <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-gray-100 shadow-2xs">
                           <div className="flex items-center justify-between mb-2">
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">
                               Full Call Transcript
                             </p>
                             <button
