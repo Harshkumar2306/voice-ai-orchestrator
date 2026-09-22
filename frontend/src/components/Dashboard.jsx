@@ -430,7 +430,7 @@ const Dashboard = ({ globalSearch = '' }) => {
         <div className="pl-2.5 sm:pl-3">
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Campaign Overview</h2>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1 max-w-xl leading-relaxed">
-            Monitor voice agents, evaluate leads in real-time, and trigger outbound automated qualification campaigns.
+            Automate outbound calls and qualify leads in real time.
           </p>
         </div>
 
