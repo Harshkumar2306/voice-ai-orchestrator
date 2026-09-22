@@ -572,28 +572,6 @@ function App() {
               })}
             </nav>
 
-            {/* Mobile System Status */}
-            <div className="p-3.5 rounded-xl bg-gradient-to-br from-blue-50/70 to-teal-50/70 border border-blue-100/80 mb-4">
-              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-blue-500" />
-                System Status
-              </p>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2 text-[11px] text-gray-600">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>All services active</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-gray-600">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>LangGraph Engine: Ready</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-gray-600">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>Vapi Voice: Connected</span>
-                </div>
-              </div>
-            </div>
-
             {/* Sign out */}
             <button 
               onClick={handleLogout}
@@ -609,7 +587,7 @@ function App() {
       <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex gap-6 overflow-hidden">
         
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex w-64 flex-col justify-between shrink-0">
+        <aside className="hidden lg:flex w-64 flex-col shrink-0">
           <nav className="space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -630,30 +608,6 @@ function App() {
               );
             })}
           </nav>
-
-          {/* Sidebar System Status Card */}
-          <div className={`p-4 rounded-2xl border ${
-            settings.dark_mode ? 'bg-gray-900 border-gray-800' : 'bg-gradient-to-br from-blue-50/80 via-white to-teal-50/80 border-blue-100/70 shadow-sm'
-          }`}>
-            <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5" />
-              System Status
-            </p>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm shadow-emerald-400"></div>
-                <p className="text-xs font-medium text-gray-700">All services operational</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-sm shadow-emerald-400"></div>
-                <p className="text-xs font-medium text-gray-700">LangGraph Agent: Active</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-sm shadow-emerald-400"></div>
-                <p className="text-xs font-medium text-gray-700">Vapi Voice: Connected</p>
-              </div>
-            </div>
-          </div>
         </aside>
 
         {/* Content Pane */}
