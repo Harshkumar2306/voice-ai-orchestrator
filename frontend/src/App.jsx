@@ -3,7 +3,7 @@ import Dashboard from './components/Dashboard';
 import AgentsConfig from './components/AgentsConfig';
 import CallLogs from './components/CallLogs';
 import AuthForm from './components/AuthForm';
-import { getMe, updateSettings, getNotifications, markNotificationRead, markAllNotificationsRead, updatePassword } from './api';
+import { getMe, updateSettings, getNotifications, markNotificationRead, markAllNotificationsRead, updatePassword, healthCheck } from './api';
 import { LayoutDashboard, Settings, Bell, Search, Mic, User, CreditCard, LogOut, X, ScrollText, Loader2, Check } from 'lucide-react';
 
 function App() {
@@ -15,6 +15,7 @@ function App() {
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [isColdStarting, setIsColdStarting] = useState(false);
   
   // Password Update State
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -61,6 +62,27 @@ function App() {
     checkAuth();
   }, []);
 
+  // Keep-alive heartbeat: ping /api/health every 10 minutes to prevent Render free-tier sleep
+  useEffect(() => {
+    const heartbeat = setInterval(() => {
+      healthCheck();
+    }, 10 * 60 * 1000); // every 10 minutes
+    return () => clearInterval(heartbeat);
+  }, []);
+
+  // Timer to detect cold start when auth takes >2.5s
+  useEffect(() => {
+    let timer;
+    if (isAuthLoading) {
+      timer = setTimeout(() => {
+        setIsColdStarting(true);
+      }, 2500);
+    } else {
+      setIsColdStarting(false);
+    }
+    return () => clearTimeout(timer);
+  }, [isAuthLoading]);
+
   // Poll for notifications if user is logged in
   useEffect(() => {
     let intervalId;
@@ -83,8 +105,14 @@ function App() {
           setSettings(userData.settings);
         }
       } catch (error) {
-        localStorage.removeItem('token');
-        setUser(null);
+        // ONLY remove token if the server explicitly returned 401 Unauthorized
+        // Do NOT delete token on network errors, timeouts, or 502/503 during cold starts!
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          setUser(null);
+        } else {
+          console.warn("Backend server may be waking up from sleep. Keeping session active.");
+        }
       }
     }
     setIsAuthLoading(false);
@@ -180,8 +208,26 @@ function App() {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff]">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f0fdfa] via-[#e0f2fe] to-[#eff6ff] p-6 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-teal-500 flex items-center justify-center shadow-xl shadow-blue-500/25 mb-5 transform hover:scale-105 transition-transform">
+          <Mic className="w-8 h-8 text-white" />
+        </div>
+        <div className="flex items-center gap-2.5 mb-2">
+          <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+          <h2 className="text-lg font-bold text-gray-900 tracking-tight">Connecting to Vocalize AI</h2>
+        </div>
+        {isColdStarting ? (
+          <div className="mt-4 max-w-sm px-5 py-4 bg-white/90 backdrop-blur-md border border-blue-200/70 rounded-2xl text-blue-900 text-xs shadow-lg shadow-blue-500/5 animate-fade-in space-y-1.5">
+            <p className="font-bold flex items-center justify-center gap-1.5 text-blue-700">
+              <span>⚡</span> Cloud Server Waking Up
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Free-tier cloud servers spin down after 15 minutes of inactivity. The backend is spinning up now (~30s). Please keep this tab open!
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500">Initializing your secure workspace...</p>
+        )}
       </div>
     );
   }

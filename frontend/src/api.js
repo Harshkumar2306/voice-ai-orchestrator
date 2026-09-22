@@ -4,6 +4,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 60000, // 60s timeout to allow free-tier cold starts to boot
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,6 +17,44 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Automatic retry interceptor for free-tier cold starts (502, 503, 504, or network errors)
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    if (!config) return Promise.reject(error);
+
+    // Only retry for server wake-up errors (network error, timeout, or 502/503/504)
+    const isColdStartError = 
+      !error.response || 
+      [502, 503, 504, 524].includes(error.response?.status) ||
+      error.code === 'ECONNABORTED' ||
+      error.message?.includes('Network Error');
+
+    config.__retryCount = config.__retryCount || 0;
+
+    // Retry up to 3 times
+    if (isColdStartError && config.__retryCount < 3) {
+      config.__retryCount += 1;
+      const delay = config.__retryCount * 2000;
+      console.warn(`[ColdStart] Cloud server waking up. Retrying request (${config.__retryCount}/3) in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return api(config);
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export const healthCheck = async () => {
+  try {
+    const response = await api.get('/health', { timeout: 15000 });
+    return response.data;
+  } catch (e) {
+    return null;
+  }
+};
 
 export const login = async (email, password) => {
   const response = await api.post('/auth/login', { email, password });

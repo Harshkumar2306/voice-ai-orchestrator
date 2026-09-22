@@ -52,6 +52,10 @@ const CallLogs = () => {
       };
 
       ws.onclose = () => {
+        // Kick sleeping cloud server with an HTTP ping to trigger cold-start boot
+        const httpHealthUrl = apiUrl.replace(/\/+$/, '') + '/health';
+        fetch(httpHealthUrl).catch(() => {});
+
         const delay = Math.min(1000 * (2 ** attempt), 30000);
         reconnectTimeout = setTimeout(() => {
           attempt++;

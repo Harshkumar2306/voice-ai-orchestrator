@@ -237,6 +237,10 @@ const Dashboard = ({ globalSearch = '' }) => {
 
       ws.onclose = () => {
         console.log("WebSocket disconnected. Attempting to reconnect...");
+        // Kick sleeping cloud server with an HTTP ping to trigger cold-start boot
+        const httpHealthUrl = apiUrl.replace(/\/+$/, '') + '/health';
+        fetch(httpHealthUrl).catch(() => {});
+
         const delay = Math.min(1000 * (2 ** attempt), 30000); // Max 30s delay
         reconnectTimeout = setTimeout(() => {
           attempt++;
