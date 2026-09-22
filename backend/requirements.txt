@@ -11,3 +11,4 @@ python-dotenv
 langchain-groq
 passlib[bcrypt]
 pyjwt
+mongomock-motor

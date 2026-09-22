@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getCompanies, getCallLogs } from '../api';
-import { ScrollText, AlertCircle, Clock, ChevronDown, ChevronUp, User, Building2, MessageSquareText } from 'lucide-react';
+import { ScrollText, AlertCircle, Clock, ChevronDown, ChevronUp, User, Building2, MessageSquareText, Search, Filter } from 'lucide-react';
 
 const CallLogs = () => {
   const [companies, setCompanies] = useState([]);
@@ -9,6 +9,8 @@ const CallLogs = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [expandedLog, setExpandedLog] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [outcomeFilter, setOutcomeFilter] = useState('ALL');
 
   useEffect(() => {
     fetchCompanies();
@@ -18,6 +20,55 @@ const CallLogs = () => {
     if (selectedCompanyId) {
       fetchCallLogs(selectedCompanyId);
     }
+  }, [selectedCompanyId]);
+
+  // Real-time updates via WebSockets for Call Logs
+  useEffect(() => {
+    let ws;
+    let reconnectTimeout;
+    let attempt = 0;
+
+    const connectWebSocket = () => {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+      const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/leads';
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        attempt = 0;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'lead_updated') {
+            if (selectedCompanyId && (!data.company_id || data.company_id === selectedCompanyId)) {
+               fetchCallLogs(selectedCompanyId);
+            }
+          }
+        } catch (e) {
+          console.error("WebSocket parsing error in CallLogs", e);
+        }
+      };
+
+      ws.onclose = () => {
+        const delay = Math.min(1000 * (2 ** attempt), 30000);
+        reconnectTimeout = setTimeout(() => {
+          attempt++;
+          connectWebSocket();
+        }, delay);
+      };
+    };
+
+    connectWebSocket();
+
+    return () => {
+      clearTimeout(reconnectTimeout);
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+    };
   }, [selectedCompanyId]);
 
   const fetchCompanies = async () => {
@@ -58,6 +109,19 @@ const CallLogs = () => {
     };
     return config[outcome] || 'bg-gray-50 text-gray-700 border-gray-200';
   };
+
+  const filteredLogs = callLogs.filter(log => {
+    const q = searchTerm.trim().toLowerCase();
+    const matchesSearch = !q || 
+      (log.customer_name && log.customer_name.toLowerCase().includes(q)) ||
+      (log.phone_number && log.phone_number.includes(q)) ||
+      (log.transcript && log.transcript.toLowerCase().includes(q)) ||
+      (log.summary && log.summary.toLowerCase().includes(q)) ||
+      (log.vapi_call_id && log.vapi_call_id.toLowerCase().includes(q));
+
+    const matchesOutcome = outcomeFilter === 'ALL' || log.outcome === outcomeFilter;
+    return matchesSearch && matchesOutcome;
+  });
 
   return (
     <div className="space-y-6 h-full flex flex-col overflow-hidden animate-fade-in">
@@ -100,6 +164,39 @@ const CallLogs = () => {
 
       {/* Call Logs List */}
       <div className="glass-panel rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col shadow-sm border border-gray-200/60 mb-2">
+        {/* Search & Filter Bar */}
+        <div className="border-b border-gray-100 p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white/40 shrink-0">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by lead, phone, or transcript..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200/80 bg-white/60 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all shadow-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <Filter className="w-4 h-4 text-gray-400 shrink-0" />
+            <select
+              value={outcomeFilter}
+              onChange={(e) => setOutcomeFilter(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-gray-200/80 bg-white/60 text-xs font-semibold text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+            >
+              <option value="ALL">All Outcomes</option>
+              <option value="QUALIFIED">Qualified</option>
+              <option value="NOT_INTERESTED">Not Interested</option>
+              <option value="NEEDS_REVIEW">Needs Review</option>
+              <option value="FAILED">Failed</option>
+              <option value="PENDING_EVALUATION">Pending Evaluation</option>
+            </select>
+            <span className="text-xs text-gray-500 font-medium px-2.5 py-1 bg-gray-100/70 rounded-lg">
+              {filteredLogs.length} {filteredLogs.length === 1 ? 'call' : 'calls'}
+            </span>
+          </div>
+        </div>
+
         {loading ? (
           <div className="p-8 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -115,9 +212,17 @@ const CallLogs = () => {
               Call logs will appear here after you launch a campaign and the AI completes conversations with your leads.
             </p>
           </div>
+        ) : filteredLogs.length === 0 ? (
+          <div className="p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-3">
+              <Search className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-semibold text-gray-700">No matching call logs</h4>
+            <p className="text-xs text-gray-400 mt-1">Try clearing your search or changing the outcome filter.</p>
+          </div>
         ) : (
           <div className="divide-y divide-gray-100 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
-            {callLogs.map((log, index) => (
+            {filteredLogs.map((log, index) => (
               <div key={log._id || index} className="group">
                 <button
                   onClick={() => setExpandedLog(expandedLog === index ? null : index)}

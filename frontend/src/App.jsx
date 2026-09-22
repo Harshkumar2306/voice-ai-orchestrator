@@ -199,10 +199,10 @@ function App() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'campaigns': return <Dashboard />;
+      case 'campaigns': return <Dashboard globalSearch={searchQuery} />;
       case 'agents': return <AgentsConfig />;
       case 'logs': return <CallLogs />;
-      default: return <Dashboard />;
+      default: return <Dashboard globalSearch={searchQuery} />;
     }
   };
 

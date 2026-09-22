@@ -15,6 +15,8 @@ from pydantic import BaseModel
 
 import secrets
 import string
+import os
+from typing import Optional
 from datetime import datetime
 
 # ---------------------------------------------------------------------------
@@ -60,11 +62,13 @@ async def lifespan(app: FastAPI):
     # Startup: Seed database
     await seed_database()
     
-    # Override John Doe's number with the user's real number for testing
-    await db.customers.update_one(
-        {"name": "John Doe"},
-        {"$set": {"phone_number": "+916299961413"}}
-    )
+    # Optionally override John Doe's number with a test number from environment
+    test_phone = os.getenv("TEST_PHONE_NUMBER")
+    if test_phone:
+        await db.customers.update_one(
+            {"name": "John Doe"},
+            {"$set": {"phone_number": test_phone}}
+        )
     
     yield
     # Shutdown
@@ -107,6 +111,65 @@ async def add_customer(req: CustomerCreate):
     result = await db.customers.insert_one(new_customer)
     new_customer["_id"] = str(result.inserted_id)
     return new_customer
+
+class CustomerStatusUpdate(BaseModel):
+    status: LeadStatus
+    notes: Optional[str] = None
+
+@app.patch("/api/customers/{customer_id}/status")
+async def update_customer_status(customer_id: str, req: CustomerStatusUpdate):
+    try:
+        obj_id = ObjectId(customer_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid customer ID")
+
+    customer = await db.customers.find_one({"_id": obj_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    update_fields = {"status": req.status.value}
+    if req.notes is not None:
+        update_fields["review_notes"] = req.notes
+
+    await db.customers.update_one(
+        {"_id": obj_id},
+        {"$set": update_fields}
+    )
+
+    # Broadcast update via WebSockets to all connected clients
+    await manager.broadcast({
+        "type": "lead_updated",
+        "customer_id": customer_id,
+        "status": req.status.value,
+        "company_id": str(customer.get("company_id"))
+    })
+
+    return {"message": "Status updated successfully", "status": req.status.value}
+
+@app.delete("/api/customers/{customer_id}")
+async def delete_customer(customer_id: str):
+    try:
+        obj_id = ObjectId(customer_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid customer ID")
+
+    customer = await db.customers.find_one({"_id": obj_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    await db.customers.delete_one({"_id": obj_id})
+    await db.call_logs.delete_many({"customer_id": customer_id})
+
+    # Broadcast removal via WebSockets
+    await manager.broadcast({
+        "type": "lead_updated",
+        "customer_id": customer_id,
+        "status": "DELETED",
+        "company_id": str(customer.get("company_id"))
+    })
+
+    return {"message": "Customer deleted successfully"}
+
 
 @app.post("/api/campaign/trigger")
 async def trigger_campaign(payload: dict, background_tasks: BackgroundTasks):

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2, Mic, MicOff } from 'lucide-react';
-import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv, addCustomer } from '../api';
+import { RefreshCw, PhoneForwarded, Users, Building2, AlertCircle, Phone, CheckCircle2, XCircle, Clock, Search, Filter, TrendingUp, BarChart3, UserCheck, UserX, AlertTriangle, Download, Plus, Loader2, Mic, MicOff, Sparkles, Trash2, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { getCompanies, getCustomers, triggerCampaign, getAnalytics, exportLeadsCsv, addCustomer, updateCustomerStatus, deleteCustomer } from '../api';
 import VapiPkg from '@vapi-ai/web';
 
 const Vapi = VapiPkg.default || VapiPkg;
@@ -81,7 +81,7 @@ const AnimatedCounter = ({ value, label, icon: Icon, color, bgColor }) => {
   );
 };
 
-const Dashboard = () => {
+const Dashboard = ({ globalSearch = '' }) => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [customers, setCustomers] = useState([]);
@@ -91,6 +91,8 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLead, setSelectedLead] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [statusFeedback, setStatusFeedback] = useState('');
 
   // Add Lead Modal State
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
@@ -164,7 +166,7 @@ const Dashboard = () => {
         provider: "11labs",
         voiceId: "bIHbv24MWmeRgasZH58o"
       },
-      serverUrl: import.meta.env.VITE_API_URL + "/webhooks/vapi",
+      serverUrl: (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/+$/, '') + '/webhooks/vapi',
       serverMessages: ["end-of-call-report", "status-update", "hang", "transcript"],
       firstMessage: `Hello ${customer.name}, this is calling from ${company?.name}. How are you today?`,
       metadata: {
@@ -330,11 +332,48 @@ const Dashboard = () => {
     }
   };
 
+  const handleStatusChange = async (newStatus) => {
+    if (!selectedLead) return;
+    setUpdatingStatus(true);
+    setStatusFeedback('');
+    try {
+      await updateCustomerStatus(selectedLead._id, newStatus);
+      setSelectedLead(prev => ({ ...prev, status: newStatus }));
+      await fetchCustomers(selectedCompanyId);
+      await fetchAnalytics(selectedCompanyId);
+      setStatusFeedback(`Status updated to ${newStatus}`);
+      setTimeout(() => setStatusFeedback(''), 2500);
+    } catch (e) {
+      setError('Failed to update lead status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleDeleteLead = async (customerId) => {
+    if (!window.confirm('Are you sure you want to delete this lead? This will also remove associated call logs.')) return;
+    setUpdatingStatus(true);
+    try {
+      await deleteCustomer(customerId);
+      setSelectedLead(null);
+      await fetchCustomers(selectedCompanyId);
+      await fetchAnalytics(selectedCompanyId);
+    } catch (e) {
+      setError('Failed to delete lead');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const selectedCompany = companies.find((c) => c._id === selectedCompanyId);
+  const activeSearch = (searchTerm || globalSearch || '').trim().toLowerCase();
   const filteredCustomers = customers
     .filter(c => 
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      c.phone_number.includes(searchTerm)
+      !activeSearch ||
+      c.name.toLowerCase().includes(activeSearch) || 
+      c.phone_number.includes(activeSearch) ||
+      (c.email && c.email.toLowerCase().includes(activeSearch)) ||
+      (c.status && c.status.toLowerCase().includes(activeSearch))
     )
     .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
@@ -404,44 +443,150 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Lead Detail Modal */}
-      {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedLead(null)}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setSelectedLead(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+      {/* Lead Detail Modal - Portaled to document.body */}
+      {selectedLead && createPortal(
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in" 
+          onClick={() => setSelectedLead(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative border border-gray-100 overflow-hidden" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setSelectedLead(null)} 
+              className="absolute top-4 right-4 p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
               <XCircle className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-5">
               <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-100 to-teal-100 border-2 border-white shadow-md flex items-center justify-center text-blue-700 font-bold text-xl uppercase">
                 {selectedLead.name.charAt(0)}
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900">{selectedLead.name}</h3>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
-                  <Phone className="w-3.5 h-3.5" /> {selectedLead.phone_number}
+                <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                  <Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedLead.phone_number}
                 </p>
                 {selectedLead.email && <p className="text-xs text-gray-400 mt-0.5">{selectedLead.email}</p>}
               </div>
             </div>
 
-            <div className="space-y-4">
+            {statusFeedback && (
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium rounded-xl flex items-center gap-2 animate-fade-in">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                {statusFeedback}
+              </div>
+            )}
+
+            <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                 <span className="text-sm text-gray-600 font-medium">Current Status</span>
                 <StatusBadge status={selectedLead.status} />
               </div>
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <span className="text-sm text-gray-600 font-medium">Company</span>
+                <span className="text-sm text-gray-600 font-medium">Company Space</span>
                 <span className="text-sm font-semibold text-gray-900">{selectedCompany?.name}</span>
               </div>
               {selectedLead.created_at && (
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                   <span className="text-sm text-gray-600 font-medium">Added On</span>
-                  <span className="text-sm text-gray-700">{new Date(selectedLead.created_at).toLocaleDateString()}</span>
+                  <span className="text-sm text-gray-700">{new Date(selectedLead.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                </div>
+              )}
+
+              {/* AI Analysis Insights if available */}
+              {(selectedLead.confidence_score !== undefined || selectedLead.sentiment) && (
+                <div className="p-3.5 bg-indigo-50/50 border border-indigo-100 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase font-bold text-indigo-700 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" /> AI Evaluation Insights
+                    </span>
+                    {selectedLead.sentiment && (
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                        selectedLead.sentiment === 'POSITIVE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        selectedLead.sentiment === 'NEGATIVE' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                        'bg-gray-50 text-gray-700 border-gray-200'
+                      }`}>
+                        {selectedLead.sentiment === 'POSITIVE' ? '😊 Positive' : selectedLead.sentiment === 'NEGATIVE' ? '😞 Negative' : '😐 Neutral'}
+                      </span>
+                    )}
+                  </div>
+                  {selectedLead.confidence_score !== undefined && (
+                    <div>
+                      <div className="flex justify-between text-xs text-gray-600 font-medium mb-1">
+                        <span>Confidence Score</span>
+                        <span>{(selectedLead.confidence_score * 100).toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all ${
+                            selectedLead.confidence_score >= 0.8 ? 'bg-emerald-500' :
+                            selectedLead.confidence_score >= 0.6 ? 'bg-amber-500' : 'bg-rose-500'
+                          }`}
+                          style={{ width: `${Math.min(Math.max(selectedLead.confidence_score * 100, 5), 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {selectedLead.review_notes && (
+                    <p className="text-xs text-gray-600 italic mt-1 bg-white/70 p-2 rounded-lg border border-indigo-100/60">
+                      {selectedLead.review_notes}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Human-in-the-Loop Resolution Action Buttons */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">
+                Human Resolution Actions
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-2.5">
+                <button
+                  onClick={() => handleStatusChange('QUALIFIED')}
+                  disabled={updatingStatus || selectedLead.status === 'QUALIFIED'}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  title="Approve as Qualified Lead"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  Mark Qualified
+                </button>
+                <button
+                  onClick={() => handleStatusChange('NOT_INTERESTED')}
+                  disabled={updatingStatus || selectedLead.status === 'NOT_INTERESTED'}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  title="Mark as Not Interested"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                  Not Interested
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleStatusChange('PENDING')}
+                  disabled={updatingStatus || selectedLead.status === 'PENDING'}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  title="Reset status back to Pending for redial"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset to Pending
+                </button>
+                <button
+                  onClick={() => handleDeleteLead(selectedLead._id)}
+                  disabled={updatingStatus}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white text-red-600 border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                  title="Delete this lead permanently"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Main Data Section */}

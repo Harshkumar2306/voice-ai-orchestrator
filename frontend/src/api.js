@@ -101,4 +101,15 @@ export const addCustomer = async (customerData) => {
   return response.data;
 };
 
+export const updateCustomerStatus = async (customerId, status, notes = null) => {
+  const response = await api.patch(`/customers/${customerId}/status`, { status, notes });
+  return response.data;
+};
+
+export const deleteCustomer = async (customerId) => {
+  const response = await api.delete(`/customers/${customerId}`);
+  return response.data;
+};
+
 export default api;
+
